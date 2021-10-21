@@ -13,7 +13,8 @@ const createModel = (sequelize, DataTypes) => {
     },
     is_deleted: {
       allowNull: false,
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     date_created: {
       type: DataTypes.DATE

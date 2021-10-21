@@ -20,11 +20,9 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
       avatar_url: {
-        allowNull: false,
         type: Sequelize.STRING
       },
       date_of_birth: {
-        allowNull: false,
         type: Sequelize.DATEONLY
       },
       country: {
@@ -48,23 +46,24 @@ module.exports = {
         type: Sequelize.STRING
       },
       email: {
-        allowNull: false,
         type: Sequelize.STRING
       },
       phone_number: {
-        allowNull: false,
         type: Sequelize.STRING
       },
       is_admin: {
+        defaultValue: false,
         allowNull: false,
         type: Sequelize.BOOLEAN
       },
       is_deactivated: {
         allowNull: false,
+        defaultValue: false,
         type: Sequelize.BOOLEAN
       },
       is_deleted: {
         allowNull: false,
+        defaultValue: false,
         type: Sequelize.BOOLEAN
       },
     });
@@ -77,7 +76,6 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       description: {
-        allowNull: false,
         type: Sequelize.TEXT
       },
       name: {
@@ -86,11 +84,13 @@ module.exports = {
       },
       is_deleted: {
         allowNull: false,
-        type: Sequelize.BOOLEAN
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       },
       date_created: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
 
@@ -119,15 +119,18 @@ module.exports = {
       },
       is_deleted: {
         allowNull: false,
-        type: Sequelize.BOOLEAN
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       },
       date_created: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       },
       is_approved: {
         allowNull: false,
-        type: Sequelize.BOOLEAN
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       }
     });
 
@@ -156,7 +159,8 @@ module.exports = {
       },
       date_created: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
 
@@ -170,7 +174,7 @@ module.exports = {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.INTEGER,
-        references:{
+        references: {
           model: 'Groups',
           key: 'id_group'
         }
@@ -181,11 +185,13 @@ module.exports = {
       },
       is_admin_invited:{
         allowNull: false,
+        defaultValue: false,
         type: Sequelize.BOOLEAN
       },
       date_created: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
       }
     });
   },

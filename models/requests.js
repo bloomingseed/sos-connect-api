@@ -15,13 +15,15 @@ const createModel = (sequelize, DataTypes) => {
       type: DataTypes.TEXT
     },
     is_deleted: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     date_created: {
       type: DataTypes.DATE
     },
     is_approved: {
-      type: DataTypes.BOOLEAN
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     timestamps:true,
@@ -29,7 +31,7 @@ const createModel = (sequelize, DataTypes) => {
     updatedAt: false
   })
   Requests.associate = function (models) {
-    Requests.belongsTo(models.Groups, { foreignKey: 'id_group', as: 'groups' })
+    Requests.belongsTo(models.Groups, { foreignKey: 'id_group', as: 'group' })
     Requests.hasMany(models.Supports, {foreignKey: 'id_request', as: 'supports' })
   }
   return Requests

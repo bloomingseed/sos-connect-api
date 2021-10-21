@@ -9,9 +9,12 @@ const createModel = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER
     },
     as_role: {
+      allowNull: false,
       type: DataTypes.BOOLEAN
     },
     is_admin_invited:{
+      allowNull: false,
+      defaultValue: false,
       type: DataTypes.BOOLEAN
     },
     date_created: {
@@ -23,7 +26,7 @@ const createModel = (sequelize, DataTypes) => {
     updatedAt: false
   })
   Members.associate = function (models) {
-    Members.belongsTo(models.Groups, { foreignKey: 'id_group', as: 'groups' })
+    Members.belongsTo(models.Groups, { foreignKey: 'id_group', as: 'group' })
   }
   return Members
 }

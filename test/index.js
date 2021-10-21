@@ -1,3 +1,4 @@
+const { request } = require("express");
 const db = require("../models");
 const Groups = db.Groups;
 const Members = db.Members;
@@ -21,9 +22,7 @@ async function createProfile(){
       street: "Pho Trach",
       email: "cuong@mail.com",
       phone_number: "123456789",
-      is_admin: 1,
-      is_deactivated: 0,
-      is_deleted: 0
+      is_admin: 1
     });
     console.log(profile);
     await profile.save();
@@ -77,6 +76,7 @@ async function createMember(){
       is_admin_invited: 0,
     });
     console.log(member);
+    console.log(member.getGroup());
     await member.save();
     console.log("createMember success");
   } catch (error) {
@@ -87,7 +87,8 @@ async function createMember(){
 async function getMembers(){
   try {
     let members = await Members.findAll();
-    console.log(members);
+    // console.log(members);
+    members.forEach(async member=>console.log(member, await member.getGroup()));
     console.log("getMembers success");
   } catch (error) {
     console.log("Error getMembers ", error)
@@ -105,6 +106,15 @@ async function createRequest(){
     });
     console.log(request);
     await request.save();
+    let request2 = new Requests({
+      username: "gooner2",
+      content: "content request2",
+    });
+    let group1 = await Groups.findByPk(1);
+    console.log(group1);
+    await request2.setGroup(group1);
+    console.log(request2);
+    await request2.save();
     console.log("createRequest success");
   } catch (error) {
     console.log("Error creating request", error)
@@ -114,7 +124,8 @@ async function createRequest(){
 async function getRequests(){
   try {
     let requests = await Requests.findAll();
-    console.log(requests);
+    console.log(requests.length);
+    requests.forEach(async request=>console.log(request,await request.getGroup(), await request.getSupports()))
     console.log("getRequests success");
   } catch (error) {
     console.log("Error getRequests ", error)
@@ -123,14 +134,20 @@ async function getRequests(){
 
 async function createSupport(){
   try {
+    let requestsArray = await Requests.findAll({where:{username:'gooner'}});
+    console.log(requestsArray.length,requestsArray);
     let support = new Supports({
-      id_request: 1,
-      username: "gooner",
-      content: "content support",
-      is_confirmed: 0,
+      username: "gooner-fake",
+      content: "content support"
     });
-    console.log(support);
     await support.save();
+    console.log(support);
+    // requestsArray.forEach(async request=> await request.addSupports([support]));
+    for(let request of requestsArray){
+      await request.addSupports([support]);
+    }
+    console.log(await requestsArray[0].getSupports());
+    console.log(support, await support.getRequest());
     console.log("createSupport success");
   } catch (error) {
     console.log("Error creating support", error)
@@ -161,4 +178,3 @@ async function test(){
 }
 
 test();
-

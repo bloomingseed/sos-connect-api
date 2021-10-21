@@ -23,7 +23,7 @@ const createModel = (sequelize, DataTypes) => {
     updatedAt: false
   })
   Supports.associate = function (models) {
-    Supports.belongsTo(models.Requests, { foreignKey: 'id_request', as: 'requests' })
+    Supports.belongsTo(models.Requests, { foreignKey: 'id_request', as: 'request' })
   }
   return Supports
 }

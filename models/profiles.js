@@ -47,13 +47,16 @@ const createModel = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     is_admin: {
+      defaultValue: false,
       allowNull: false,
       type: DataTypes.BOOLEAN
     },
     is_deactivated: {
+      defaultValue: false,
       type: DataTypes.BOOLEAN
     },
     is_deleted: {
+      defaultValue: false,
       type: DataTypes.BOOLEAN
     },
   }, {
@@ -62,7 +65,7 @@ const createModel = (sequelize, DataTypes) => {
     updatedAt: false
   })
   Profiles.associate = function (models) {
-    
+
   }
   return Profiles
 }
