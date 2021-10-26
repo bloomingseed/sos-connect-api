@@ -23,6 +23,7 @@ const createModel = (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY
     },
     country: {
+      allowNull: false,
       type: DataTypes.STRING
     },
     province: {
@@ -30,6 +31,7 @@ const createModel = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     district: {
+      allowNull: false,
       type: DataTypes.STRING
     },
     ward: {
@@ -37,10 +39,10 @@ const createModel = (sequelize, DataTypes) => {
       type: DataTypes.STRING
     },
     street: {
+      allowNull: false,
       type: DataTypes.STRING
     },
     email: {
-      allowNull: false,
       type: DataTypes.STRING
     },
     phone_number: {
