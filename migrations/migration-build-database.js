@@ -157,10 +157,20 @@ module.exports = {
         allowNull: false,
         type: Sequelize.TEXT
       },
+      is_confirmed: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
       date_created: {
         allowNull: false,
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW
+      },
+      is_deleted: {
+        allowNull: false,
+        defaultValue: false,
+        type: Sequelize.BOOLEAN
       }
     });
 
@@ -196,10 +206,10 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable('Members');
+    await queryInterface.dropTable('Supports');
+    await queryInterface.dropTable('Requests');
     await queryInterface.dropTable('Accounts');
     await queryInterface.dropTable('Groups');
-    await queryInterface.dropTable('Requests');
-    await queryInterface.dropTable('Supports');
-    await queryInterface.dropTable('Members');
   }
 };

@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "node test/index.js",
-    "migrate-db": "npx sequelize-cli db:migrate"
+    "seed-db": "for f in $(ls seeders); do npx sequelize-cli db:seed --seed $f; done",
+    "migrate-db": "npx sequelize-cli db:migrate",
+    "clear-db": "npx sequelize-cli db:migrate:undo:all"
   },
   "repository": {
     "type": "git",
@@ -21,6 +24,7 @@
   "dependencies": {
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mysql2": "^2.3.2",
     "pg": "^8.7.1",
@@ -28,6 +32,7 @@
     "sequelize": "^6.7.0"
   },
   "devDependencies": {
+    "nodemon": "^2.0.14",
     "sequelize-cli": "^6.2.0"
   }
 }
