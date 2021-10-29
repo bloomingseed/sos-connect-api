@@ -14,8 +14,16 @@ const createModel = (sequelize, DataTypes) => {
     content: {
       type: DataTypes.TEXT
     },
+    is_confirmed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     date_created: {
       type: DataTypes.DATE
+    },
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     timestamps:true,

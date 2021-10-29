@@ -19,6 +19,7 @@ module.exports = {
           id_request: value.id_request,
           username: member.username,
           content: "I dont have the items needed but i will send you some $$$",
+          is_confirmed: false,
           date_created: new Date(),
         });
       }
