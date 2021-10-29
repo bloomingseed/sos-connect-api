@@ -5,6 +5,7 @@ var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
 var profilesRouter = express.Router();
+var profileRequestsRouter = express.Router({ mergeParams: true});
 
 //GET /profiles
 //admin get all profiles
@@ -95,6 +96,19 @@ async function deleteUserProfileHandler(req, res){
   }
 }
 
+//GET /profiles/:username/requests
+async function getListProfileRequestsHandler(req, res){
+  let username = req.params.username;
+  try {
+    await getUserProfile(username, res);
+    let requests = await db.Requests.findAll({
+      where: { username: username },
+    });
+    return res.status(200).json(requests);
+  } catch (error) {
+    return res.status(500).json({ error: error});
+  }
+}
 
 profilesRouter
   .route("/")
@@ -105,5 +119,9 @@ profilesRouter
   .get(getUserProfileHandler)
   .put(authUserMiddleware, getUserMiddleware, updateUserProfileHandler)
   .delete(authUserMiddleware, getUserMiddleware, deleteUserProfileHandler);
+profileRequestsRouter
+  .route("/")
+  .get(getListProfileRequestsHandler);
+profilesRouter.use("/:username/requests", profileRequestsRouter)
 
 module.exports = { router: profilesRouter, name: "profiles" };

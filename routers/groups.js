@@ -6,6 +6,7 @@ var Op = require("sequelize").Op;
 const DUP_KEY_ERRCODE = "23505";
 var groupsRouter = express.Router();
 var groupUsersRouter = express.Router({ mergeParams: true });
+var groupRequestRouter = express.Router({ mergeParams: true });
 
 // feature 6
 // uses token auth middleware by default
@@ -158,6 +159,54 @@ async function createGroupHandler(req, res) {
   }
 }
 
+//GET /groups/:id_group/requests
+async function getListGroupRequestHandler(req, res){
+  try {
+    let groupId = req.params.id_group;
+    await getGroup(groupId, res);
+    let searchParams = {
+      search: req.query.search || "",
+      field: req.query.field || "id_request",
+      sort: req.query.sort || "asc",
+    };
+    let requests = await db.Requests.findAll({
+      where: {
+        content: { [Op.like]: `%${searchParams.search}%` },
+      },
+      order: [[searchParams.field, searchParams.sort]],
+    });
+    return res.status(200).json(requests);
+  } catch (error) {
+    return res.status(500).json({ error: error})
+  }
+}
+
+// POST /groups/:id_group/requests
+async function createGroupRequestHandler(req, res) {
+  req.body.id_group = req.params.id_group;
+  req.body.username = req.user.username;
+  try {
+    let member = await db.Members.findOne({ 
+      where: {
+        id_group: req.body.id_group,
+        username: req.body.username,
+      }
+    });
+    console.log(member);
+    if (member == null) {
+      return res.status(400).json({ error: `${req.body.username} is not a member of ${req.body.group_id}` });
+    }
+    let request = new db.Requests();
+    for (let key in req.body){
+      request[key] = req.body[key];
+    }
+    await request.save();
+    return res.sendStatus(200);
+  } catch (error) {
+    return res.status(500).json({ error: error});
+  }
+}
+
 groupsRouter
   .route("/")
   .get(listGroupsHandler)
@@ -172,5 +221,10 @@ groupUsersRouter
   .get(listGroupUsersHandler)
   .post(authUserMiddleware, getUserMiddleware, userJoinsGroupHandler);
 groupsRouter.use("/:id_group/users", groupUsersRouter); // uses nested router
+groupRequestRouter
+  .route("/")
+  .get(getListGroupRequestHandler)
+  .post(authUserMiddleware, getUserMiddleware, createGroupRequestHandler);
+groupsRouter.use("/:id_group/requests", groupRequestRouter);
 
 module.exports = { router: groupsRouter, name: "groups" };
