@@ -171,6 +171,7 @@ async function getListGroupRequestHandler(req, res){
     };
     let requests = await db.Requests.findAll({
       where: {
+        id_group: groupId,
         content: { [Op.like]: `%${searchParams.search}%` },
       },
       order: [[searchParams.field, searchParams.sort]],
