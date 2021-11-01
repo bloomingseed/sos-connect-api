@@ -107,7 +107,7 @@ async function getRequestHandler(req, res) {
 
 //PUT /requests/:id_request
 async function updateRequestHandler(req, res) {
-  if (req.user.is_admin == false) {
+  if (req.user.is_admin == true) {
     return adminSetsApprovalHandler(req, res);
   }
   let id_request = req.params.id_request;
