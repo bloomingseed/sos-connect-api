@@ -31,7 +31,6 @@ module.exports = {
             : districtIndx < 9
             ? streets[1]
             : streets[2]),
-        is_admin: false,
         is_deactivated: false,
         is_deleted: false,
       });
@@ -47,7 +46,6 @@ module.exports = {
       district: "Liên Chiểu",
       ward: "Hòa Khánh Bắc",
       street: "K81/01 Ngô Thì Nhậm",
-      is_admin: true,
       is_deactivated: false,
       is_deleted: false,
     });
@@ -62,7 +60,6 @@ module.exports = {
       district: "Liên Chiểu",
       ward: "Hòa Khánh Bắc",
       street: "1 Ngô Thì Nhậm",
-      is_admin: true,
       is_deactivated: false,
       is_deleted: false,
     });

@@ -1,6 +1,6 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware, getUserMiddleware } = require("../helpers");
+var { authUserMiddleware } = require("../helpers");
 var Op = require("sequelize").Op;
 
 var requestsRouter = express.Router();
@@ -107,13 +107,13 @@ async function getRequestHandler(req, res) {
 
 //PUT /requests/:id_request
 async function updateRequestHandler(req, res) {
-  if (req.user.is_admin == true) {
+  if (req.verifyResult.is_admin == true) {
     return adminSetsApprovalHandler(req, res);
   }
   let id_request = req.params.id_request;
   try {
     let request = await getRequest(id_request, res);
-    if (req.user.username != request.username) {
+    if (req.verifyResult.username != request.username) {
       return res
         .status(401)
         .json({ error: `User must be ${request.username}` });
@@ -134,7 +134,7 @@ async function deleteRequestHandler(req, res) {
   let id_request = req.params.id_request;
   try {
     let request = await getRequest(id_request, res);
-    if (req.user.username != request.username) {
+    if (req.verifyResult.username != request.username) {
       return res
         .status(401)
         .json({ error: `User must be ${request.username}` });
@@ -150,8 +150,8 @@ async function deleteRequestHandler(req, res) {
 requestsRouter
   .route("/:id_request")
   .get(getRequestHandler)
-  .put(authUserMiddleware, getUserMiddleware, updateRequestHandler)
-  .delete(authUserMiddleware, getUserMiddleware, deleteRequestHandler);
+  .put(authUserMiddleware, updateRequestHandler)
+  .delete(authUserMiddleware, deleteRequestHandler);
 requestsRouter.use("/:id_request/supports", requestSupportsRouter);
 requestSupportsRouter
   .route("/")

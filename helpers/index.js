@@ -1,6 +1,5 @@
 var jwt = require("jsonwebtoken");
 var config = require("../config");
-var db = require("../models");
 
 function getAuthToken(req) {
   let authHeader = req.get("Authorization");
@@ -16,20 +15,10 @@ function authUserMiddleware(req, res, next) {
   }
   try {
     req.verifyResult = jwt.verify(accessToken, config.ACCESS_TOKEN_SECRET);
+    console.log(req.verifyResult);
   } catch (err) {
     return res.status(401).json({ error: "Access token is invalid" });
   }
   next();
 }
-async function getUserMiddleware(req, res, next) {
-  let username = req.verifyResult.username;
-  let user = await db.Profiles.findByPk(username);
-  if (user == null) {
-    return res
-      .status(400)
-      .json({ error: `Username ${username} does not exist` });
-  }
-  req.user = user;
-  next();
-}
-module.exports = { getAuthToken, authUserMiddleware, getUserMiddleware };
+module.exports = { getAuthToken, authUserMiddleware };
