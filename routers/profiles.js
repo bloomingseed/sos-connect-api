@@ -1,6 +1,6 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware, getUserMiddleware } = require("../helpers");
+var { authUserMiddleware } = require("../helpers");
 var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
@@ -10,7 +10,7 @@ var profileRequestsRouter = express.Router({ mergeParams: true});
 //GET /profiles
 //admin get all profiles
 async function listProfilesHandler(req, res){
-  if (req.user.is_admin === false){
+  if (req.verifyResult.is_admin === false){
     return res.status(401).json({ error: `User must be admin`})
   }
   try {
@@ -64,7 +64,7 @@ async function getUserProfileHandler(req, res){
 //PUT /profiles/:username
 async function updateUserProfileHandler(req, res){
   let username = req.params.username;
-  if (req.user.username != username){
+  if (req.verifyResult.username != username){
     return res.status(401).json({ error: `User must be ${username}` });
   }
   try {
@@ -83,7 +83,7 @@ async function updateUserProfileHandler(req, res){
 //DELETE /profiles/:username
 async function deleteUserProfileHandler(req, res){
   let username = req.params.username;
-  if (req.user.username != username){
+  if (req.verifyResult.username != username){
     return res.status(401).json({ error: `User must be ${username}` });
   }
   try {
@@ -112,13 +112,13 @@ async function getListProfileRequestsHandler(req, res){
 
 profilesRouter
   .route("/")
-  .get(authUserMiddleware, getUserMiddleware, listProfilesHandler)
+  .get(authUserMiddleware, listProfilesHandler)
   .post(authUserMiddleware, createProfileHandler);
 profilesRouter
   .route("/:username")
   .get(getUserProfileHandler)
-  .put(authUserMiddleware, getUserMiddleware, updateUserProfileHandler)
-  .delete(authUserMiddleware, getUserMiddleware, deleteUserProfileHandler);
+  .put(authUserMiddleware, updateUserProfileHandler)
+  .delete(authUserMiddleware, deleteUserProfileHandler);
 profileRequestsRouter
   .route("/")
   .get(getListProfileRequestsHandler);

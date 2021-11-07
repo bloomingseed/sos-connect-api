@@ -51,11 +51,6 @@ module.exports = {
       phone_number: {
         type: Sequelize.STRING
       },
-      is_admin: {
-        defaultValue: false,
-        allowNull: false,
-        type: Sequelize.BOOLEAN
-      },
       is_deactivated: {
         allowNull: false,
         defaultValue: false,

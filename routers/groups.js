@@ -1,6 +1,6 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware, getUserMiddleware } = require("../helpers");
+var { authUserMiddleware } = require("../helpers");
 var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
@@ -31,9 +31,8 @@ async function showGroupInfoHandler(req, res) {
   }
 }
 // PUT /groups/:id_group
-// uses getUserMiddleware
 async function updateGroupInfoHandler(req, res) {
-  if (req.user.is_admin == false) {
+  if (req.verifyResult.is_admin == false) {
     return res.status(401).json({ error: `User must be admin` });
   }
   let groupId = req.params.id_group;
@@ -54,7 +53,7 @@ async function updateGroupInfoHandler(req, res) {
 }
 // DELETE /groups/:id_group
 async function deleteGroupHandler(req, res) {
-  if (req.user.is_admin == false) {
+  if (req.verifyResult.is_admin == false) {
     return res.status(401).json({ error: `User must be admin` });
   }
   let groupId = req.params.id_group;
@@ -69,7 +68,7 @@ async function deleteGroupHandler(req, res) {
 }
 // POST /groups/:id_group/users: user joins group
 async function userJoinsGroupHandler(req, res) {
-  if (req.user.is_admin == true) {
+  if (req.verifyResult.is_admin == true) {
     return res.status(400).json({ error: `Admin can not join groups` });
   }
   let groupId = req.params.id_group;
@@ -144,7 +143,7 @@ async function listGroupsHandler(req, res) {
 }
 // POST /groups
 async function createGroupHandler(req, res) {
-  if (req.user.is_admin == false) {
+  if (req.verifyResult.is_admin == false) {
     return res.status(401).json({ error: `Only admins can create groups` });
   }
   let group = new db.Groups();
@@ -185,9 +184,9 @@ async function getListGroupRequestHandler(req, res){
 // POST /groups/:id_group/requests
 async function createGroupRequestHandler(req, res) {
   req.body.id_group = req.params.id_group;
-  req.body.username = req.user.username;
+  req.body.username = req.verifyResult.username;
   try {
-    let member = await db.Members.findOne({ 
+    let member = await db.Members.findOne({
       where: {
         id_group: req.body.id_group,
         username: req.body.username,
@@ -211,21 +210,21 @@ async function createGroupRequestHandler(req, res) {
 groupsRouter
   .route("/")
   .get(listGroupsHandler)
-  .post(authUserMiddleware, getUserMiddleware, createGroupHandler);
+  .post(authUserMiddleware, createGroupHandler);
 groupsRouter
   .route("/:id_group")
   .get(showGroupInfoHandler)
-  .put(authUserMiddleware, getUserMiddleware, updateGroupInfoHandler)
-  .delete(authUserMiddleware, getUserMiddleware, deleteGroupHandler);
+  .put(authUserMiddleware, updateGroupInfoHandler)
+  .delete(authUserMiddleware, deleteGroupHandler);
 groupUsersRouter
   .route("/")
   .get(listGroupUsersHandler)
-  .post(authUserMiddleware, getUserMiddleware, userJoinsGroupHandler);
+  .post(authUserMiddleware, userJoinsGroupHandler);
 groupsRouter.use("/:id_group/users", groupUsersRouter); // uses nested router
 groupRequestRouter
   .route("/")
   .get(getListGroupRequestHandler)
-  .post(authUserMiddleware, getUserMiddleware, createGroupRequestHandler);
+  .post(authUserMiddleware, createGroupRequestHandler);
 groupsRouter.use("/:id_group/requests", groupRequestRouter);
 
 module.exports = { router: groupsRouter, name: "groups" };

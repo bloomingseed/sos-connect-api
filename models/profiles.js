@@ -48,11 +48,6 @@ const createModel = (sequelize, DataTypes) => {
     phone_number: {
       type: DataTypes.STRING
     },
-    is_admin: {
-      defaultValue: false,
-      allowNull: false,
-      type: DataTypes.BOOLEAN
-    },
     is_deactivated: {
       defaultValue: false,
       type: DataTypes.BOOLEAN
