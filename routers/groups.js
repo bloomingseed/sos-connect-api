@@ -75,7 +75,7 @@ async function userJoinsGroupHandler(req, res) {
   let groupId = req.params.id_group;
   await getGroup(groupId, res);
   let role = req.body.as_role;
-  if (!role) {
+  if (role == null) {
     return res
       .status(400)
       .json({ error: `Request body must contain 'as_role' field` });
@@ -160,7 +160,7 @@ async function createGroupHandler(req, res) {
 }
 
 //GET /groups/:id_group/requests
-async function getListGroupRequestHandler(req, res){
+async function getListGroupRequestHandler(req, res) {
   try {
     let groupId = req.params.id_group;
     await getGroup(groupId, res);
@@ -178,7 +178,7 @@ async function getListGroupRequestHandler(req, res){
     });
     return res.status(200).json(requests);
   } catch (error) {
-    return res.status(500).json({ error: error})
+    return res.status(500).json({ error: error });
   }
 }
 
@@ -187,24 +187,28 @@ async function createGroupRequestHandler(req, res) {
   req.body.id_group = req.params.id_group;
   req.body.username = req.user.username;
   try {
-    let member = await db.Members.findOne({ 
+    let member = await db.Members.findOne({
       where: {
         id_group: req.body.id_group,
         username: req.body.username,
-      }
+      },
     });
     console.log(member);
     if (member == null) {
-      return res.status(400).json({ error: `${req.body.username} is not a member of ${req.body.group_id}` });
+      return res
+        .status(400)
+        .json({
+          error: `${req.body.username} is not a member of ${req.body.group_id}`,
+        });
     }
     let request = new db.Requests();
-    for (let key in req.body){
+    for (let key in req.body) {
       request[key] = req.body[key];
     }
     await request.save();
     return res.sendStatus(200);
   } catch (error) {
-    return res.status(500).json({ error: error});
+    return res.status(500).json({ error: error });
   }
 }
 
