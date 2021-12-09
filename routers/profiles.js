@@ -26,6 +26,10 @@ async function createProfileHandler(req, res){
   try {
     req.body.username = req.verifyResult.username;
     let profile = new db.Profiles();
+    if( req.body.last_name == null || req.body.first_name == null || req.body.gender == null || req.body.date_of_birth == null ||
+      req.body.country == null || req.body.province == null || req.body.district == null || req.body.ward == null || req.body.street == null){
+        return res.status(400).json({ error: `Data has empty fields`});
+    }
     for (let key in req.body){
       profile[key] = req.body[key];
     }
@@ -71,6 +75,9 @@ async function updateUserProfileHandler(req, res){
     let profile = await getUserProfile(username, res);
     for (let key in req.body) {
       if (key == "is_deleted") continue;
+      if( req.body[key] == null){
+        return res.status(400).json({ error: `Data has empty fields`});
+      }
       profile[key] = req.body[key];
     }
     await profile.save();
