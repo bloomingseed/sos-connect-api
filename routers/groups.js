@@ -11,6 +11,9 @@ var groupRequestRouter = express.Router({ mergeParams: true });
 // feature 6
 // uses token auth middleware by default
 async function getGroup(groupId, res) {
+  if (typeof groupId !== "int") {
+    return res.status(400).json({ error: `id_group must be an integer`})
+  }
   let group = await db.Groups.findByPk(groupId);
   if (group == null) {
     return res
