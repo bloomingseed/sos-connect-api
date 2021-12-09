@@ -20,6 +20,8 @@ try{
 }
 envs = { ...envs, env, sequelizeConfig };
 
+envs.PORT = envs.PORT || 4000;
+
 console.log("env:", envs);
 
 module.exports = envs;
