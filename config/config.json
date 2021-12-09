@@ -2,7 +2,7 @@
   "development": {
     "username": "xceeded",
     "password": "bloomingseed",
-    "database": "sos_connect_auth",
+    "database": "sos_connect_api",
     "host": "127.0.0.1",
     "dialect": "postgres"
   },
