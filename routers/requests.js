@@ -8,6 +8,9 @@ var requestSupportsRouter = express.Router({ mergeParams: true });
 
 //get request middleware
 async function getRequest(id_request, res) {
+  if (typeof parseInt(id_request) !== "number") {
+    return res.status(400).json({ error: `id_request must be an integer`});
+  }
   let request = await db.Requests.findByPk(id_request);
   if (request == null) {
     return res
@@ -23,6 +26,9 @@ async function adminSetsApprovalHandler(req, res) {
   let requestId = req.params.id_request;
   let request = await getRequest(requestId, res);
   let isApproved = req.body.is_approved || true;
+  if (typeof Boolean(isApproved) !== "boolean") {
+    return res.status(400).json({ error: `Data has fields wrong type`});
+  }
   request.is_approved = isApproved;
   try {
     await request.save();
@@ -38,10 +44,15 @@ async function listRequestSupportsHandler(req, res) {
     field: req.query.field || "id_support",
     sort: req.query.sort || "asc",
   };
+  if (typeof parseInt(req.params.id_request) !== "number") {
+    return res.status(400).json({ error: `id_request must be an integer`});
+  }
   try {
     let supports = await db.Supports.findAll({
       where: {
+        id_request: req.params.id_request,
         username: { [Op.like]: `%${searchParams.search}%` },
+        is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
     });
@@ -55,6 +66,9 @@ async function listRequestSupportsHandler(req, res) {
 // POST /requests/:id_request/supports
 async function createSupportHandler(req, res) {
   let requestId = req.params.id_request;
+  if (typeof parseInt(requestId) !== "number") {
+    return res.status(400).json({ error: `id_request must be an integer`});
+  }
   let request = await db.Requests.findByPk(requestId, {
     include: { model: db.Groups, as: "group" },
   });
@@ -79,6 +93,9 @@ async function createSupportHandler(req, res) {
     return res.status(400).json({
       error: `Supporting user and requesting user must belong to the same group`,
     });
+  }
+  if (req.body.content == null){
+    return res.status(400).json({ error: `Data has empty fields`});
   }
   let support = new db.Supports({
     id_request: requestId,
@@ -120,6 +137,9 @@ async function updateRequestHandler(req, res) {
     }
     for (let key in req.body) {
       if (key == "is_deleted") continue;
+      if( req.body[key] == null){
+        return res.status(400).json({ error: `Data has empty fields`});
+      }
       request[key] = req.body[key];
     }
     await request.save();
