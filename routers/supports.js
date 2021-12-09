@@ -77,7 +77,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_deleted: false
  *      400:
- *        description: Support does not exist
+ *        description: Support does not exist/ id_support is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -146,7 +146,7 @@ async function getSupportHandler(req, res) {
  *      200:
  *        description: Confirmed
  *      400:
- *        description: Support does not exist
+ *        description: Support does not exist/ id_support is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -155,8 +155,8 @@ async function getSupportHandler(req, res) {
  *                error:
  *                  type: string
  *                  example: "Support ID ${id_support} does not exist"
- *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not the creator of the request or support
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -227,8 +227,8 @@ async function updateSupportHandler(req, res) {
  *                error:
  *                  type: string
  *                  example: "Support ID ${id_support} does not exist"
- *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not the creator of the support
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:

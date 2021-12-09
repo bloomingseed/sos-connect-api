@@ -69,6 +69,16 @@ async function getGroup(groupId, res) {
  *                name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
  *                is_deleted: true
  *                date_created: 2021-10-29T13:36:14.053Z
+ *      400:
+ *        description: Group ID is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "id_group must be an integer"
  *      404:
  *        description: Group not found
  *        content:
@@ -130,8 +140,28 @@ async function showGroupInfoHandler(req, res) {
  *    responses:
  *      200:
  *        description: Group updated
+ *      400:
+ *        description: Group ID is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "id_group must be an integer"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not adminUser is not admin
+ *        description: User is not admin
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be admin"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -163,9 +193,7 @@ async function updateGroupInfoHandler(req, res) {
   }
   let groupId = req.params.id_group;
   let group = await getGroup(groupId, res);
-  console.log(req.body);
   for (let key in req.body) {
-    console.log(key);
     if (key == "is_deleted") continue; // prevents updating 'is_deleted' field
     if( req.body[key] == null){
       return res.status(400).json({ error: `Data has empty fields`});
@@ -201,8 +229,28 @@ async function updateGroupInfoHandler(req, res) {
  *    responses:
  *      200:
  *        description: Group deleted
+ *      400:
+ *        description: Group ID is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "id_group must be an integer"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not adminUser is not admin
+ *        description: User is not admin
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be admin"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -275,10 +323,31 @@ async function deleteGroupHandler(req, res) {
  *              as_role: true
  *              is_admin_invited: false
  *    responses:
- *      200:
+ *      201:
  *        description: User joined
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                username:
+ *                  type:string
+ *                id_group:
+ *                  type:int
+ *                as_role:
+ *                  type: boolean
+ *                is_admin_invited:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *              example:
+ *                username: seeding.user.3
+ *                id_group: 1
+ *                as_role: false
+ *                is_admin_invited: false
+ *                date_created: 2021-10-29T13:36:30.567Z
  *      400:
- *        description: User is admin
+ *        description: User is admin/ Group ID is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -287,7 +356,7 @@ async function deleteGroupHandler(req, res) {
  *                error:
  *                  type: string
  *                  example: "admin can not join groups"
- *      401:
+ *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
@@ -337,7 +406,13 @@ async function userJoinsGroupHandler(req, res) {
       as_role: role,
       is_admin_invited: req.body.is_admin_invited || false,
     });
-    return res.sendStatus(200);
+    member = await db.Members.findOne({
+      where: {
+        id_group: groupId,
+        username: req.verifyResult.username,
+      }
+    })
+    return res.status(201).json(member);
   } catch (e) {
     if (e.parent.code == DUP_KEY_ERRCODE) {
       return res.status(400).json({
@@ -408,6 +483,17 @@ async function userJoinsGroupHandler(req, res) {
  *                  as_role: true
  *                  is_admin_invited: false
  *                  date_created: 2021-10-29T13:36:30.567Z
+ *      
+ *      400:
+ *        description: Group ID is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "id_group must be an integer"
  *      500:
  *        description: Account failed to register due to server error
  *        content:
@@ -543,10 +629,51 @@ async function listGroupsHandler(req, res) {
  *              name: Hỗ trợ COVID-19 quận Cẩm Lệ, Đà Nẵng
  *              decription: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Cẩm Lệ, Đà Nẵng.Người gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group.
  *    responses:
- *      200:
+ *      201:
  *        description: Created
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_group:
+ *                  type: int
+ *                description:
+ *                  type: string
+ *                name:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *              example:
+ *                id_group: 1
+ *                description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
+ *                name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
+ *                is_deleted: true
+ *                date_created: 2021-10-29T13:36:14.053Z
+ *      400:
+ *        description: Data has empty fields
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Data has empty fields"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not admin
+ *        description: User is not admin
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be admin"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -575,7 +702,7 @@ async function createGroupHandler(req, res) {
   }
   try {
     await group.save();
-    return res.sendStatus(200);
+    return res.status(201).json(group);
   } catch (e) {
     return res.status(500).json({ error: e.parent });
   }
@@ -707,10 +834,37 @@ async function getListGroupRequestHandler(req, res) {
  *            example:
  *              content: cần hổ trợ lương thực, thực phẩm
  *    responses:
- *      200:
+ *      201:
  *        description: Created
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_request:
+ *                  type: int
+ *                id_group:
+ *                  type: int
+ *                username:
+ *                  type: string
+ *                content:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *                is_approved:
+ *                  type: boolean
+ *              example:
+ *                id_request: 1
+ *                id_group: 2
+ *                username: seeding.user.1
+ *                content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. instant noodles\n2. milk\n3. pumpkin\n4. eggs
+ *                is_deleted: true
+ *                date_created: 2021-10-29T13:36:48.562Z
+ *                is_approved: true
  *      400:
- *        description: User is not member of group
+ *        description: User is not member of group/ Content is null
  *        content:
  *          application/json:
  *            schema:
@@ -719,7 +873,7 @@ async function getListGroupRequestHandler(req, res) {
  *                error:
  *                  type: string
  *                  example: "{username} is not member of ${id_group}"
- *      401:
+ *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
@@ -765,7 +919,7 @@ async function createGroupRequestHandler(req, res) {
       request[key] = req.body[key];
     }
     await request.save();
-    return res.sendStatus(200);
+    return res.status(201).json(request);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
