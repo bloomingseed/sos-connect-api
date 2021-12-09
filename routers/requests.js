@@ -8,7 +8,7 @@ var requestSupportsRouter = express.Router({ mergeParams: true });
 
 //get request middleware
 async function getRequest(id_request, res) {
-  if (typeof id_request !== "int") {
+  if (typeof parseInt(id_request) !== "number") {
     return res.status(400).json({ error: `id_request must be an integer`});
   }
   let request = await db.Requests.findByPk(id_request);
@@ -26,7 +26,7 @@ async function adminSetsApprovalHandler(req, res) {
   let requestId = req.params.id_request;
   let request = await getRequest(requestId, res);
   let isApproved = req.body.is_approved || true;
-  if (typeof isApproved !== "boolean") {
+  if (typeof Boolean(isApproved) !== "boolean") {
     return res.status(400).json({ error: `Data has fields wrong type`});
   }
   request.is_approved = isApproved;
@@ -44,7 +44,7 @@ async function listRequestSupportsHandler(req, res) {
     field: req.query.field || "id_support",
     sort: req.query.sort || "asc",
   };
-  if (typeof req.params.id_request !== "int") {
+  if (typeof parseInt(req.params.id_request) !== "number") {
     return res.status(400).json({ error: `id_request must be an integer`});
   }
   try {
@@ -65,7 +65,7 @@ async function listRequestSupportsHandler(req, res) {
 // POST /requests/:id_request/supports
 async function createSupportHandler(req, res) {
   let requestId = req.params.id_request;
-  if (typeof requestId !== "int") {
+  if (typeof parseInt(requestId) !== "number") {
     return res.status(400).json({ error: `id_request must be an integer`});
   }
   let request = await db.Requests.findByPk(requestId, {

@@ -8,7 +8,7 @@ var supportsRouter = express.Router();
 async function isUserOwnsSupportMiddleware(req, res, next) {
   let username = req.verifyResult.username;
   let supportId = req.params.id_support;
-  if (typeof supportId !== "int") {
+  if (typeof parseInt(supportId) !== "number") {
     return res.status(400).json({ error: `id_support must be an integer`});
   }
   let support = await db.Supports.findByPk(supportId, {
@@ -26,7 +26,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
 // GET /supports/:id_support
 async function getSupportHandler(req, res) {
   let supportId = req.params.id_support;
-  if (typeof supportId !== "int") {
+  if (typeof parseInt(supportId) !== "number") {
     return res.status(400).json({ error: `id_support must be an integer`});
   }
   try {

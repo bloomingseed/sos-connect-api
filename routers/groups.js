@@ -11,7 +11,7 @@ var groupRequestRouter = express.Router({ mergeParams: true });
 // feature 6
 // uses token auth middleware by default
 async function getGroup(groupId, res) {
-  if (typeof groupId !== "int") {
+  if (typeof parseInt(groupId) !== "number") {
     return res.status(400).json({ error: `id_group must be an integer`});
   }
   let group = await db.Groups.findByPk(groupId);
@@ -86,7 +86,7 @@ async function userJoinsGroupHandler(req, res) {
       .json({ error: `Request body must contain 'as_role' field` });
   }
   let is_admin_invited = req.body.is_admin_invited;
-  if (typeof role !== 'boolean'|| (is_admin_invited != null && typeof is_admin_invited !== 'boolean') ) {
+  if (typeof Boolean(role) !== 'boolean'|| (is_admin_invited != null && typeof Boolean(is_admin_invited) !== 'boolean') ) {
     return res.status(400).json({ error: `Data has fields wrong type`});
   }
   try {
@@ -120,6 +120,7 @@ async function listGroupUsersHandler(req, res) {
       where: {
         id_group: groupId,
         username: { [Op.like]: `%${searchParams.search}%` },
+        
       },
       order: [[searchParams.field, searchParams.sort]],
     });
@@ -196,7 +197,7 @@ async function getListGroupRequestHandler(req, res) {
 // POST /groups/:id_group/requests
 async function createGroupRequestHandler(req, res) {
   req.body.id_group = req.params.id_group;
-  if (typeof req.body.id_group !== "int") {
+  if (typeof parseInt(req.body.id_group) !== "nember") {
     return res.status(400).json({ error: `id_group must be an integer`});
   }
   req.body.username = req.verifyResult.username;
