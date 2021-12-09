@@ -205,7 +205,7 @@ async function createProfileHandler(req, res){
       profile[key] = req.body[key];
     }
     await profile.save();
-    return res.sendStatus(201);
+    return res.status(201).json(profile);
   } catch (error) {
     if (error.parent.code == DUP_KEY_ERRCODE || error.parent.code == "ER_DUP_ENTRY") {
       return res.status(400).json({

@@ -299,7 +299,7 @@ async function createSupportHandler(req, res) {
   });
   try {
     await support.save();
-    return res.sendStatus(201);
+    return res.status(201).json(support);
   } catch (e) {
     return res.status(500).json({ error: e });
   }

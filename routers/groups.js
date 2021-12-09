@@ -385,7 +385,13 @@ async function userJoinsGroupHandler(req, res) {
       as_role: role,
       is_admin_invited: req.body.is_admin_invited || false,
     });
-    return res.sendStatus(201);
+    member = await db.Members.findOne({
+      where: {
+        id_group: groupId,
+        username: req.verifyResult.username,
+      }
+    })
+    return res.status(201).json(member);
   } catch (e) {
     if (e.parent.code == DUP_KEY_ERRCODE) {
       return res.status(400).json({
@@ -654,7 +660,7 @@ async function createGroupHandler(req, res) {
   }
   try {
     await group.save();
-    return res.sendStatus(201);
+    return res.status(201).json(group);
   } catch (e) {
     return res.status(500).json({ error: e.parent });
   }
@@ -844,7 +850,7 @@ async function createGroupRequestHandler(req, res) {
       request[key] = req.body[key];
     }
     await request.save();
-    return res.sendStatus(201);
+    return res.status(201).json(request);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
