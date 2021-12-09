@@ -325,6 +325,27 @@ async function deleteGroupHandler(req, res) {
  *    responses:
  *      201:
  *        description: User joined
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                username:
+ *                  type:string
+ *                id_group:
+ *                  type:int
+ *                as_role:
+ *                  type: boolean
+ *                is_admin_invited:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *              example:
+ *                username: seeding.user.3
+ *                id_group: 1
+ *                as_role: false
+ *                is_admin_invited: false
+ *                date_created: 2021-10-29T13:36:30.567Z
  *      400:
  *        description: User is admin/ Group ID is not integer
  *        content:
@@ -610,6 +631,27 @@ async function listGroupsHandler(req, res) {
  *    responses:
  *      201:
  *        description: Created
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_group:
+ *                  type: int
+ *                description:
+ *                  type: string
+ *                name:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *              example:
+ *                id_group: 1
+ *                description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
+ *                name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
+ *                is_deleted: true
+ *                date_created: 2021-10-29T13:36:14.053Z
  *      400:
  *        description: Data has empty fields
  *        content:
@@ -794,6 +836,33 @@ async function getListGroupRequestHandler(req, res) {
  *    responses:
  *      201:
  *        description: Created
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_request:
+ *                  type: int
+ *                id_group:
+ *                  type: int
+ *                username:
+ *                  type: string
+ *                content:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *                is_approved:
+ *                  type: boolean
+ *              example:
+ *                id_request: 1
+ *                id_group: 2
+ *                username: seeding.user.1
+ *                content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. instant noodles\n2. milk\n3. pumpkin\n4. eggs
+ *                is_deleted: true
+ *                date_created: 2021-10-29T13:36:48.562Z
+ *                is_approved: true
  *      400:
  *        description: User is not member of group/ Content is null
  *        content:

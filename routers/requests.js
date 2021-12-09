@@ -232,6 +232,33 @@ async function listRequestSupportsHandler(req, res) {
  *    responses:
  *      201:
  *        description: Created
+ *      content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_support:
+ *                  type: int
+ *                id_request:
+ *                  type: int
+ *                username:
+ *                  type: string
+ *                content:
+ *                  type: string
+ *                is_confirmed:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *              example:
+ *                id_request: 1
+ *                id_group: 1
+ *                username: seeding.user.10
+ *                content: I dont have the items needed but i will send you some $$$
+ *                is_confirmed: false
+ *                date_created: 2021-10-29T13:36:48.562Z
+ *                is_deleted: false
  *      400:
  *        description: Request does not exist/ User is not the creator of the request/ User is not member of a group/ id_request is not integer
  *        content:

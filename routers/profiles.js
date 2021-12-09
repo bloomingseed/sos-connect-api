@@ -166,6 +166,57 @@ async function listProfilesHandler(req, res){
  *    responses:
  *      201:
  *        description: Created
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                username:
+ *                  type: string
+ *                last_name:
+ *                  type: string
+ *                first_name:
+ *                  type: string
+ *                gender:
+ *                  type: boolean
+ *                avatar_url:
+ *                  type: string
+ *                date_of_birth:
+ *                  type: string
+ *                country:
+ *                  type: string
+ *                province:
+ *                  type: string
+ *                district:
+ *                  type: string
+ *                ward:
+ *                  type: string
+ *                street:
+ *                  type: string
+ *                email:
+ *                  type: string
+ *                phone_number:
+ *                  type: string
+ *                is_deactivated:
+ *                  type: boolean
+ *                is_deleted:
+ *                  type: boolean
+ *              example:
+ *                username: nvc
+ *                last_name: Nguyễn Văn
+ *                first_name: Cường
+ *                gender: true
+ *                avatar_url: null
+ *                date_of_birth: 2000-07-23
+ *                country: Việt Nam
+ *                province: Đà Nẵng
+ *                district: Liên Chiểu
+ *                ward: Hòa Khánh Bắc
+ *                street: 1 Ngô Thì Nhậm
+ *                email: "nvc@mail"
+ *                phone_number: 0132456789
+ *                is_deactivated: false
+ *                is_deleted: false
  *      400:
  *        description: User has profile/ Data has empty fields
  *        content:
