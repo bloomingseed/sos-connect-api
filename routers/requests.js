@@ -51,7 +51,7 @@ async function getRequest(id_request, res) {
  *      200:
  *        description: Updated
  *      400:
- *        description: Request does not exist
+ *        description: Request does not exist/ Data has fields wrong type
  *        content:
  *          application/json:
  *            schema:
@@ -60,7 +60,7 @@ async function getRequest(id_request, res) {
  *                error:
  *                  type: string
  *                  example: "Request ${id_request} does not exist"
- *      401:
+ *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
@@ -162,7 +162,7 @@ async function adminSetsApprovalHandler(req, res) {
  *                  date_created: 2021-10-29T13:36:48.562Z
  *                  is_deleted: false
  *      400:
- *        description: Request does not exist
+ *        description: Request does not exist/ id_request is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -230,10 +230,10 @@ async function listRequestSupportsHandler(req, res) {
  *            example:
  *              content: I dont have the items needed but i will send you some $$$
  *    responses:
- *      200:
+ *      201:
  *        description: Created
  *      400:
- *        description: Request does not exist/ User is not the creator of the request/ User is not member of a group
+ *        description: Request does not exist/ User is not the creator of the request/ User is not member of a group/ id_request is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -242,7 +242,7 @@ async function listRequestSupportsHandler(req, res) {
  *                error:
  *                  type: string
  *                  example: "Request ${id_request} does not exist"
- *      401:
+ *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
@@ -299,7 +299,7 @@ async function createSupportHandler(req, res) {
   });
   try {
     await support.save();
-    return res.sendStatus(200);
+    return res.sendStatus(201);
   } catch (e) {
     return res.status(500).json({ error: e });
   }
@@ -351,7 +351,7 @@ async function createSupportHandler(req, res) {
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_approved: true
  *      400:
- *        description: Request does not exist
+ *        description: Request does not exist/ id_request is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -408,7 +408,7 @@ async function getRequestHandler(req, res) {
  *      200:
  *        description: Updated
  *      400:
- *        description: Request does not exist
+ *        description: Request does not exist/ id_request is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -418,7 +418,17 @@ async function getRequestHandler(req, res) {
  *                  type: string
  *                  example: "Request ${id_request} does not exist"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not the creator of the request
+ *        description: User is not the creator of the request
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be ${request.username}"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -473,7 +483,7 @@ async function updateRequestHandler(req, res) {
  *      200:
  *        description: Deleted
  *      400:
- *        description: Request does not exist
+ *        description: Request does not exist/ id_request is not integer
  *        content:
  *          application/json:
  *            schema:
@@ -483,7 +493,17 @@ async function updateRequestHandler(req, res) {
  *                  type: string
  *                  example: "Request ${id_request} does not exist"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not the creator of the request
+ *        description: User is not the creator of the request
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be ${request.username}"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:

@@ -81,7 +81,17 @@ var profileRequestsRouter = express.Router({ mergeParams: true});
  *                  is_deactivated: false
  *                  is_deleted: false
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not admin
+ *        description: User is not admin
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be admin"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -154,10 +164,10 @@ async function listProfilesHandler(req, res){
  *              ward: Hòa Khánh Bắc
  *              street: 1 Tôn Đức Thắng
  *    responses:
- *      200:
+ *      201:
  *        description: Created
  *      400:
- *        description: User has profile
+ *        description: User has profile/ Data has empty fields
  *        content:
  *          application/json:
  *            schema:
@@ -166,7 +176,7 @@ async function listProfilesHandler(req, res){
  *                error:
  *                  type: string
  *                  example: "User {username} has already"
- *      401:
+ *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
@@ -195,7 +205,7 @@ async function createProfileHandler(req, res){
       profile[key] = req.body[key];
     }
     await profile.save();
-    return res.sendStatus(200);
+    return res.sendStatus(201);
   } catch (error) {
     if (error.parent.code == DUP_KEY_ERRCODE || error.parent.code == "ER_DUP_ENTRY") {
       return res.status(400).json({
@@ -358,7 +368,7 @@ async function getUserProfileHandler(req, res){
  *      200:
  *        description: Updated
  *      400:
- *        description: User does not exist
+ *        description: User does not exist/ Data has empty fields
  *        content:
  *          application/json:
  *            schema:
@@ -368,7 +378,17 @@ async function getUserProfileHandler(req, res){
  *                  type: string
  *                  example: "Username ${username} does not exist"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not username
+ *        description: User is not username
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be ${username}"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
@@ -428,7 +448,17 @@ async function updateUserProfileHandler(req, res){
  *                  type: string
  *                  example: "Username ${username} does not exist"
  *      401:
- *        description: Failed to authorize request/ Access token is invalid/ User is not username
+ *        description: User is not username
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be ${username}"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
  *        content:
  *          application/json:
  *            schema:
