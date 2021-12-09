@@ -120,7 +120,6 @@ async function listGroupUsersHandler(req, res) {
       where: {
         id_group: groupId,
         username: { [Op.like]: `%${searchParams.search}%` },
-        
       },
       order: [[searchParams.field, searchParams.sort]],
     });
@@ -143,6 +142,7 @@ async function listGroupsHandler(req, res) {
     let groups = await db.Groups.findAll({
       where: {
         name: { [Op.like]: `%${searchParams.search}%` },
+        is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
     });
@@ -185,6 +185,7 @@ async function getListGroupRequestHandler(req, res) {
       where: {
         id_group: groupId,
         content: { [Op.like]: `%${searchParams.search}%` },
+        is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
     });

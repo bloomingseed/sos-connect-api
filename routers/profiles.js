@@ -109,7 +109,10 @@ async function getListProfileRequestsHandler(req, res){
   try {
     await getUserProfile(username, res);
     let requests = await db.Requests.findAll({
-      where: { username: username },
+      where: { 
+        username: username,
+        is_deleted: false,
+      },
     });
     return res.status(200).json(requests);
   } catch (error) {

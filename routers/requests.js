@@ -52,6 +52,7 @@ async function listRequestSupportsHandler(req, res) {
       where: {
         id_request: req.params.id_request,
         username: { [Op.like]: `%${searchParams.search}%` },
+        is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
     });
