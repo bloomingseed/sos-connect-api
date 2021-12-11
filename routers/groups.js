@@ -10,7 +10,7 @@ var groupRequestRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
- * tags: 
+ * tags:
  *  name: groups
  *  description: Group related APIs
  */
@@ -19,7 +19,7 @@ var groupRequestRouter = express.Router({ mergeParams: true });
 // uses token auth middleware by default
 async function getGroup(groupId, res) {
   if (isNaN(parseInt(groupId))) {
-    return res.status(400).json({ error: `id_group must be an integer`});
+    return res.status(400).json({ error: `id_group must be an integer` });
   }
   let group = await db.Groups.findByPk(groupId);
   if (group == null) {
@@ -195,8 +195,8 @@ async function updateGroupInfoHandler(req, res) {
   let group = await getGroup(groupId, res);
   for (let key in req.body) {
     if (key == "is_deleted") continue; // prevents updating 'is_deleted' field
-    if( req.body[key] == null){
-      return res.status(400).json({ error: `Data has empty fields`});
+    if (req.body[key] == null) {
+      return res.status(400).json({ error: `Data has empty fields` });
     }
     group[key] = req.body[key];
   }
@@ -407,8 +407,8 @@ async function userJoinsGroupHandler(req, res) {
       where: {
         id_group: groupId,
         username: req.verifyResult.username,
-      }
-    })
+      },
+    });
     return res.status(201).json(member);
   } catch (e) {
     if (e.parent.code == DUP_KEY_ERRCODE) {
@@ -480,7 +480,7 @@ async function userJoinsGroupHandler(req, res) {
  *                  as_role: true
  *                  is_admin_invited: false
  *                  date_created: 2021-10-29T13:36:30.567Z
- *      
+ *
  *      400:
  *        description: Group ID is not integer
  *        content:
@@ -692,7 +692,7 @@ async function createGroupHandler(req, res) {
   }
   let group = new db.Groups();
   if (req.body.name == null || req.body.description == null) {
-    return res.status(400).json({ error: `Data has empty fields`});
+    return res.status(400).json({ error: `Data has empty fields` });
   }
   for (let key in req.body) {
     group[key] = req.body[key];
@@ -889,8 +889,8 @@ async function getListGroupRequestHandler(req, res) {
  */
 async function createGroupRequestHandler(req, res) {
   req.body.id_group = req.params.id_group;
-  if (isNaN(parseInt(groupId))) {
-    return res.status(400).json({ error: `id_group must be an integer`});
+  if (isNaN(parseInt(req.body.id_group))) {
+    return res.status(400).json({ error: `id_group must be an integer` });
   }
   req.body.username = req.verifyResult.username;
   try {
@@ -902,13 +902,11 @@ async function createGroupRequestHandler(req, res) {
     });
     console.log(member);
     if (member == null) {
-      return res
-        .status(400)
-        .json({
-          error: `${req.body.username} is not a member of ${req.body.group_id}`,
-        });
+      return res.status(400).json({
+        error: `${req.body.username} is not a member of ${req.body.group_id}`,
+      });
     }
-    if( req.body.content == null ) {
+    if (req.body.content == null) {
       return res.status(400).json({ error: `content is null` });
     }
     let request = new db.Requests();
