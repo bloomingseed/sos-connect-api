@@ -15,7 +15,7 @@ var requestSupportsRouter = express.Router({ mergeParams: true });
 
 //get request middleware
 async function getRequest(id_request, res) {
-  if (typeof parseInt(id_request) !== "number") {
+  if (isNaN(parseInt(id_request))) {
     return res.status(400).json({ error: `id_request must be an integer`});
   }
   let request = await db.Requests.findByPk(id_request);
@@ -51,7 +51,7 @@ async function getRequest(id_request, res) {
  *      200:
  *        description: Updated
  *      400:
- *        description: Request does not exist/ Data has fields wrong type
+ *        description: Request does not exist
  *        content:
  *          application/json:
  *            schema:
@@ -81,9 +81,6 @@ async function adminSetsApprovalHandler(req, res) {
   let requestId = req.params.id_request;
   let request = await getRequest(requestId, res);
   let isApproved = req.body.is_approved || true;
-  if (typeof Boolean(isApproved) !== "boolean") {
-    return res.status(400).json({ error: `Data has fields wrong type`});
-  }
   request.is_approved = isApproved;
   try {
     await request.save();
@@ -184,7 +181,7 @@ async function listRequestSupportsHandler(req, res) {
     field: req.query.field || "id_support",
     sort: req.query.sort || "asc",
   };
-  if (typeof parseInt(req.params.id_request) !== "number") {
+  if (isNaN(parseInt(req.params.id_request))) {
     return res.status(400).json({ error: `id_request must be an integer`});
   }
   try {
@@ -288,7 +285,7 @@ async function listRequestSupportsHandler(req, res) {
  */
 async function createSupportHandler(req, res) {
   let requestId = req.params.id_request;
-  if (typeof parseInt(requestId) !== "number") {
+  if (isNaN(parseInt(requestId))) {
     return res.status(400).json({ error: `id_request must be an integer`});
   }
   let request = await db.Requests.findByPk(requestId, {
