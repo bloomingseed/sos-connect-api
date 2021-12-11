@@ -396,9 +396,6 @@ async function userJoinsGroupHandler(req, res) {
       .json({ error: `Request body must contain 'as_role' field` });
   }
   let is_admin_invited = req.body.is_admin_invited;
-  if (typeof Boolean(role) !== 'boolean'|| (is_admin_invited != null && typeof Boolean(is_admin_invited) !== 'boolean') ) {
-    return res.status(400).json({ error: `Data has fields wrong type`});
-  }
   try {
     await db.Members.create({
       username: req.verifyResult.username,

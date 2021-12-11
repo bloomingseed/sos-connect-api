@@ -51,7 +51,7 @@ async function getRequest(id_request, res) {
  *      200:
  *        description: Updated
  *      400:
- *        description: Request does not exist/ Data has fields wrong type
+ *        description: Request does not exist
  *        content:
  *          application/json:
  *            schema:
@@ -81,9 +81,6 @@ async function adminSetsApprovalHandler(req, res) {
   let requestId = req.params.id_request;
   let request = await getRequest(requestId, res);
   let isApproved = req.body.is_approved || true;
-  if (typeof Boolean(isApproved) !== "boolean") {
-    return res.status(400).json({ error: `Data has fields wrong type`});
-  }
   request.is_approved = isApproved;
   try {
     await request.save();
