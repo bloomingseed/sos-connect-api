@@ -18,7 +18,7 @@ var groupRequestRouter = express.Router({ mergeParams: true });
 // feature 6
 // uses token auth middleware by default
 async function getGroup(groupId, res) {
-  if (typeof parseInt(groupId) !== "number") {
+  if (isNaN(parseInt(groupId))) {
     return res.status(400).json({ error: `id_group must be an integer`});
   }
   let group = await db.Groups.findByPk(groupId);
@@ -892,7 +892,7 @@ async function getListGroupRequestHandler(req, res) {
  */
 async function createGroupRequestHandler(req, res) {
   req.body.id_group = req.params.id_group;
-  if (typeof parseInt(req.body.id_group) !== "nember") {
+  if (isNaN(parseInt(groupId))) {
     return res.status(400).json({ error: `id_group must be an integer`});
   }
   req.body.username = req.verifyResult.username;
