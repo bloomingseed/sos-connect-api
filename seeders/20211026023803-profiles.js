@@ -1,4 +1,5 @@
 "use strict";
+const { Profiles } = require("../models");
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -63,7 +64,10 @@ module.exports = {
       is_deactivated: false,
       is_deleted: false,
     });
-    return queryInterface.bulkInsert("Profiles", seedings);
+    for (let i = 0; i < seedings.length; ++i) {
+      await Profiles.create(seedings[i]);
+    }
+    // return queryInterface.bulkInsert("Profiles", seedings);
   },
 
   down: async (queryInterface, Sequelize) => {
