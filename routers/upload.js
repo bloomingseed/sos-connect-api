@@ -1,12 +1,11 @@
 var express = require("express");
 var uploadRouter = express.Router();
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png"];
+const { HOSTNAME } = require("../config");
 
 function uploadImage(image, req) {
-  image.mv("public/uploads" + image.name);
-  let url = `${req.protocol}://${req.get("host")}/uploads/${encodeURIComponent(
-    image.name
-  )}`;
+  image.mv("public/uploads/" + image.name);
+  let url = `${HOSTNAME}/uploads/${encodeURIComponent(image.name)}`;
   return url;
 }
 
