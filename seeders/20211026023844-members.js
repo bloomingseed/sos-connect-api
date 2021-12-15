@@ -4,7 +4,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     let seedings = [];
     let groups = (
-      await queryInterface.sequelize.query('SELECT id_group from "Groups";')
+      await queryInterface.sequelize.query("SELECT id_group from `Groups`;")
     )[0];
     console.log(groups);
     for (let i = 0; i < 20; ++i) {

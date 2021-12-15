@@ -3,7 +3,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     let members = (
-      await queryInterface.sequelize.query('SELECT * from "Members";')
+      await queryInterface.sequelize.query("SELECT * from `Members`;")
     )[0];
     console.log(members);
     let seedings = [];
