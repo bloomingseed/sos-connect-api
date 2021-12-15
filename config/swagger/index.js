@@ -1,8 +1,9 @@
 const config = require("../index");
 function getServerUrl() {
-  return config.env == "production"
-    ? "https://sos-connect-api.herokuapp.com"
-    : `http://localhost:${config.PORT}`;
+  return (
+    config.HOSTNAME ||
+    `http://localhost:${config.HOST_APP_PORT || config.APP_PORT}`
+  );
 }
 module.exports = {
   definition: {

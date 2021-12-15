@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  db:
+    build: ./database-service
+    restart: always
+  nginx:
+    build: ./nginx-service
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx-service/conf.d:/etc/nginx/conf.d
+      - ./nginx-service/www:/usr/share/nginx/html
+  app:
+    depends_on:
+      - db
+      - nginx
+    build: .
+    environment:
+      - DB_HOST=db
+    volumes:
+      - ./.env:/app/.env
+      - ./public:/app/public

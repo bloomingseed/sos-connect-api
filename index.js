@@ -18,11 +18,9 @@ app.use(
   })
 );
 app.use(express.static("public"));
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(apiSpec));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(apiSpec));
 app.use(cors());
 app.use(express.json());
-// app.use(bodyParser.urlencoded({extended: true}));
-// console.log(routers);
 routers.forEach((router) => app.use(`/${router.name}`, router.router));
 
 app.listen(PORT, () => {
