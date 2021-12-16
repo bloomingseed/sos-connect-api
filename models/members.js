@@ -26,7 +26,8 @@ const createModel = (sequelize, DataTypes) => {
     updatedAt: false
   })
   Members.associate = function (models) {
-    Members.belongsTo(models.Groups, { foreignKey: 'id_group', as: 'group' })
+    Members.belongsTo(models.Groups, { foreignKey: 'id_group', as: 'group' });
+    Members.belongsTo(models.Profiles, { foreignKey: 'username', as: 'profile' });
   }
   return Members
 }
