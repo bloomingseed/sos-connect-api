@@ -6,7 +6,7 @@ var supportsRouter = express.Router();
 
 /**
  * @swagger
- * tags: 
+ * tags:
  *  name: supports
  *  description: Supports related APIs
  */
@@ -16,7 +16,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
   let username = req.verifyResult.username;
   let supportId = req.params.id_support;
   if (isNaN(parseInt(supportId))) {
-    return res.status(400).json({ error: `id_support must be an integer`});
+    return res.status(400).json({ error: `id_support must be an integer` });
   }
   let support = await db.Supports.findByPk(supportId, {
     include: { model: db.Requests, as: "request" },
@@ -33,7 +33,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
 
 /**
  * @swagger
- * /supports/{id_support}:
+ * /api/supports/{id_support}:
  *  get:
  *    summary: Show a support infomation
  *    tags:
@@ -48,7 +48,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
  *    responses:
  *      200:
  *        description: Return support infomation
- *        
+ *
  *        content:
  *          application/json:
  *            schema:
@@ -96,7 +96,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
 async function getSupportHandler(req, res) {
   let supportId = req.params.id_support;
   if (isNaN(parseInt(supportId))) {
-    return res.status(400).json({ error: `id_support must be an integer`});
+    return res.status(400).json({ error: `id_support must be an integer` });
   }
   try {
     let support = await db.Supports.findByPk(supportId);
@@ -113,7 +113,7 @@ async function getSupportHandler(req, res) {
 
 /**
  * @swagger
- * /supports/{id_support}:
+ * /api/supports/{id_support}:
  *  put:
  *    summary: update a support
  *    tags:
@@ -141,7 +141,7 @@ async function getSupportHandler(req, res) {
  *            example:
  *              is_confirmed: true
  *              content: I dont have the items needed but i will send you some $$$
- *              
+ *
  *    responses:
  *      200:
  *        description: Confirmed
@@ -179,11 +179,11 @@ async function updateSupportHandler(req, res) {
     if (username == support.request.username) {
       // user A confirms support
       support.is_confirmed = req.body.is_confirmed || true;
-      try{
+      try {
         await support.save();
         return res.sendStatus(200);
-      } catch(e){
-        return res.status(500).json({error:e});
+      } catch (e) {
+        return res.status(500).json({ error: e });
       }
     }
     // unauthorized
@@ -200,7 +200,7 @@ async function updateSupportHandler(req, res) {
 
 /**
  * @swagger
- * /supports/{id_support}:
+ * /api/supports/{id_support}:
  *  delete:
  *    summary: Delete a support
  *    tags:

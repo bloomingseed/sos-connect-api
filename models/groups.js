@@ -49,12 +49,12 @@ const createModel = (sequelize, DataTypes) => {
   Groups.afterCreate(async (group, options) => {
     if (group.thumbnail_image_url == null) {
       let url = `uploads/g${group.id_group}-thumbnail.png`;
-      seedImage(`G${group.id_group}`, "public/" + url, THUMBNAIL_SIZE, false);
+      seedImage(`G${group.id_group}`, url, THUMBNAIL_SIZE, false);
       group.thumbnail_image_url = `${HOSTNAME}/` + url;
     }
     if (group.cover_image_url == null) {
       let url = `uploads/g${group.id_group}-cover.png`;
-      seedImage(group.name, "public/" + url, COVER_SIZE, true);
+      seedImage(group.name, url, COVER_SIZE, true);
       group.cover_image_url = `${HOSTNAME}/` + url;
     }
     await group.save();

@@ -72,7 +72,7 @@ const createModel = (sequelize, DataTypes) => {
   Profiles.afterCreate(async (profile, options) => {
     if (profile.avatar_url == null) {
       let url = `uploads/${profile.username.replace("@", "-")}.png`;
-      seedImage(profile.username[0], "public/" + url, THUMBNAIL_SIZE, false);
+      seedImage(profile.username[0], url, THUMBNAIL_SIZE, false);
       profile.avatar_url = `${HOSTNAME}/` + url;
     }
     await profile.save();

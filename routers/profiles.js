@@ -5,19 +5,18 @@ var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
 var profilesRouter = express.Router();
-var profileRequestsRouter = express.Router({ mergeParams: true});
+var profileRequestsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
- * tags: 
+ * tags:
  *  name: profiles
  *  description: Profiles related APIs
  */
 
-
 /**
  * @swagger
- * /profiles:
+ * /api/profiles:
  *  get:
  *    summary: admin get list profiles
  *    tags:
@@ -107,21 +106,21 @@ var profileRequestsRouter = express.Router({ mergeParams: true});
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function listProfilesHandler(req, res){
-  if (req.verifyResult.is_admin === false){
-    return res.status(401).json({ error: `User must be admin`})
+async function listProfilesHandler(req, res) {
+  if (req.verifyResult.is_admin === false) {
+    return res.status(401).json({ error: `User must be admin` });
   }
   try {
     let profiles = await db.Profiles.findAll();
     return res.status(200).json(profiles);
   } catch (error) {
-    return res.status(500).json({ error: error});
+    return res.status(500).json({ error: error });
   }
 }
 
 /**
  * @swagger
- * /profiles:
+ * /api/profiles:
  *  post:
  *    summary: User create profile
  *    tags:
@@ -244,41 +243,55 @@ async function listProfilesHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function createProfileHandler(req, res){
+async function createProfileHandler(req, res) {
   try {
     req.body.username = req.verifyResult.username;
     let profile = new db.Profiles();
-    if( req.body.last_name == null || req.body.first_name == null || req.body.gender == null || req.body.date_of_birth == null ||
-      req.body.country == null || req.body.province == null || req.body.district == null || req.body.ward == null || req.body.street == null){
-        return res.status(400).json({ error: `Data has empty fields`});
+    if (
+      req.body.last_name == null ||
+      req.body.first_name == null ||
+      req.body.gender == null ||
+      req.body.date_of_birth == null ||
+      req.body.country == null ||
+      req.body.province == null ||
+      req.body.district == null ||
+      req.body.ward == null ||
+      req.body.street == null
+    ) {
+      return res.status(400).json({ error: `Data has empty fields` });
     }
-    for (let key in req.body){
+    for (let key in req.body) {
       profile[key] = req.body[key];
     }
     await profile.save();
     return res.status(201).json(profile);
   } catch (error) {
-    if (error.parent.code == DUP_KEY_ERRCODE || error.parent.code == "ER_DUP_ENTRY") {
+    if (
+      error.parent.code == DUP_KEY_ERRCODE ||
+      error.parent.code == "ER_DUP_ENTRY"
+    ) {
       return res.status(400).json({
         error: `User ${req.verifyResult.username} has already`,
       });
     }
-    return res.status(500).json({ error: error});
+    return res.status(500).json({ error: error });
   }
 }
 
 //get user profile middleware
-async function getUserProfile(username, res){
+async function getUserProfile(username, res) {
   let profile = await db.Profiles.findByPk(username);
   if (profile == null) {
-    return res.status(400).json({ error: `Username ${username} does not exist`});
+    return res
+      .status(400)
+      .json({ error: `Username ${username} does not exist` });
   }
   return profile;
 }
 
 /**
  * @swagger
- * /profiles/{username}:
+ * /api/profiles/{username}:
  *  get:
  *    summary: Show a user profile
  *    tags:
@@ -361,19 +374,19 @@ async function getUserProfile(username, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function getUserProfileHandler(req, res){
+async function getUserProfileHandler(req, res) {
   let username = req.params.username;
   try {
     let profile = await getUserProfile(username, res);
     return res.status(200).json(profile);
   } catch (error) {
-    return res.status(500).json({ error: error});
+    return res.status(500).json({ error: error });
   }
 }
 
 /**
  * @swagger
- * /profiles/{username}:
+ * /api/profiles/{username}:
  *  put:
  *    summary: User joins a group
  *    tags:
@@ -455,17 +468,17 @@ async function getUserProfileHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function updateUserProfileHandler(req, res){
+async function updateUserProfileHandler(req, res) {
   let username = req.params.username;
-  if (req.verifyResult.username != username){
+  if (req.verifyResult.username != username) {
     return res.status(401).json({ error: `User must be ${username}` });
   }
   try {
     let profile = await getUserProfile(username, res);
     for (let key in req.body) {
       if (key == "is_deleted") continue;
-      if( req.body[key] == null){
-        return res.status(400).json({ error: `Data has empty fields`});
+      if (req.body[key] == null) {
+        return res.status(400).json({ error: `Data has empty fields` });
       }
       profile[key] = req.body[key];
     }
@@ -478,7 +491,7 @@ async function updateUserProfileHandler(req, res){
 
 /**
  * @swagger
- * /profiles/{username}:
+ * /api/profiles/{username}:
  *  delete:
  *    summary: User deleted profile
  *    tags:
@@ -525,24 +538,24 @@ async function updateUserProfileHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function deleteUserProfileHandler(req, res){
+async function deleteUserProfileHandler(req, res) {
   let username = req.params.username;
-  if (req.verifyResult.username != username){
+  if (req.verifyResult.username != username) {
     return res.status(401).json({ error: `User must be ${username}` });
   }
   try {
     let profile = await getUserProfile(username, res);
-    profile.is_deleted= true;
+    profile.is_deleted = true;
     profile.save();
-    return res.sendStatus(200)
+    return res.sendStatus(200);
   } catch (error) {
-    return res.status(500).json({ error: error});
+    return res.status(500).json({ error: error });
   }
 }
 
 /**
  * @swagger
- * /profiles/{username}/requests:
+ * /api/profiles/{username}/requests:
  *  get:
  *    summary: Show list requests of a user
  *    tags:
@@ -608,19 +621,19 @@ async function deleteUserProfileHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function getListProfileRequestsHandler(req, res){
+async function getListProfileRequestsHandler(req, res) {
   let username = req.params.username;
   try {
     await getUserProfile(username, res);
     let requests = await db.Requests.findAll({
-      where: { 
+      where: {
         username: username,
         is_deleted: false,
       },
     });
     return res.status(200).json(requests);
   } catch (error) {
-    return res.status(500).json({ error: error});
+    return res.status(500).json({ error: error });
   }
 }
 
@@ -633,9 +646,7 @@ profilesRouter
   .get(getUserProfileHandler)
   .put(authUserMiddleware, updateUserProfileHandler)
   .delete(authUserMiddleware, deleteUserProfileHandler);
-profileRequestsRouter
-  .route("/")
-  .get(getListProfileRequestsHandler);
-profilesRouter.use("/:username/requests", profileRequestsRouter)
+profileRequestsRouter.route("/").get(getListProfileRequestsHandler);
+profilesRouter.use("/:username/requests", profileRequestsRouter);
 
 module.exports = { router: profilesRouter, name: "profiles" };

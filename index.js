@@ -4,10 +4,12 @@ const fileUpload = require("express-fileupload");
 const app = express();
 const { PORT } = require("./config");
 const routers = require("./routers");
+const fs = require("fs");
+const prefix = "/api";
 
-const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 const apiSpec = swaggerJsDoc(require("./config/swagger"));
+fs.writeFileSync("./public/swagger.json", JSON.stringify(apiSpec));
 
 app.use(
   fileUpload({
@@ -18,10 +20,9 @@ app.use(
   })
 );
 app.use(express.static("public"));
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(apiSpec));
 app.use(cors());
 app.use(express.json());
-routers.forEach((router) => app.use(`/${router.name}`, router.router));
+routers.forEach((router) => app.use(`${prefix}/${router.name}`, router.router));
 
 app.listen(PORT, () => {
   console.log(`Example app listening at port: ${PORT}`);

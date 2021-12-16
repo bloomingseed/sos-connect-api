@@ -32,7 +32,7 @@ async function getGroup(groupId, res) {
 
 /**
  * @swagger
- * /groups/{id_group}:
+ * /api/groups/{id_group}:
  *  get:
  *    summary: Show a group information
  *    tags:
@@ -108,7 +108,7 @@ async function showGroupInfoHandler(req, res) {
 
 /**
  * @swagger
- * /groups/{id_group}:
+ * /api/groups/{id_group}:
  *  put:
  *    summary: Admin updates a group information
  *    tags:
@@ -211,7 +211,7 @@ async function updateGroupInfoHandler(req, res) {
 
 /**
  * @swagger
- * /groups/{id_group}:
+ * /api/groups/{id_group}:
  *  delete:
  *    summary: Admin deletes a group information
  *    tags:
@@ -293,7 +293,7 @@ async function deleteGroupHandler(req, res) {
 
 /**
  * @swagger
- * /groups/{id_group}/users:
+ * /api/groups/{id_group}/users:
  *  post:
  *    summary: User joins a group
  *    tags:
@@ -422,7 +422,7 @@ async function userJoinsGroupHandler(req, res) {
 
 /**
  * @swagger
- * /groups/{id_group}/users:
+ * /api/groups/{id_group}/users:
  *  get:
  *    summary: Show group's users
  *    tags:
@@ -522,7 +522,7 @@ async function listGroupUsersHandler(req, res) {
 
 /**
  * @swagger
- * /groups:
+ * /api/groups:
  *  get:
  *    summary: Show list groups
  *    tags:
@@ -604,7 +604,7 @@ async function listGroupsHandler(req, res) {
 
 /**
  * @swagger
- * /groups:
+ * /api/groups:
  *  post:
  *    summary: admin create a new group
  *    tags:
@@ -707,7 +707,7 @@ async function createGroupHandler(req, res) {
 
 /**
  * @swagger
- * /groups/{id_group}/requests:
+ * /api/groups/{id_group}/requests:
  *  get:
  *    summary: Show group's requests
  *    tags:
@@ -805,7 +805,7 @@ async function getListGroupRequestHandler(req, res) {
 
 /**
  * @swagger
- * /groups/{id_group}/requests:
+ * /api/groups/{id_group}/requests:
  *  post:
  *    summary: create a request
  *    tags:

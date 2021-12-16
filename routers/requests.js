@@ -8,7 +8,7 @@ var requestSupportsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
- * tags: 
+ * tags:
  *  name: requests
  *  description: Requests related APIs
  */
@@ -16,7 +16,7 @@ var requestSupportsRouter = express.Router({ mergeParams: true });
 //get request middleware
 async function getRequest(id_request, res) {
   if (isNaN(parseInt(id_request))) {
-    return res.status(400).json({ error: `id_request must be an integer`});
+    return res.status(400).json({ error: `id_request must be an integer` });
   }
   let request = await db.Requests.findByPk(id_request);
   if (request == null) {
@@ -29,7 +29,7 @@ async function getRequest(id_request, res) {
 
 /**
  * @swagger
- * /requests/{id_request}:
+ * /api/requests/{id_request}:
  *  put:
  *    summary: Admin approves a request
  *    tags:
@@ -92,7 +92,7 @@ async function adminSetsApprovalHandler(req, res) {
 
 /**
  * @swagger
- * /requests/{id_request}/supports:
+ * /api/requests/{id_request}/supports:
  *  get:
  *    summary: Show supports list for request
  *    tags:
@@ -182,7 +182,7 @@ async function listRequestSupportsHandler(req, res) {
     sort: req.query.sort || "asc",
   };
   if (isNaN(parseInt(req.params.id_request))) {
-    return res.status(400).json({ error: `id_request must be an integer`});
+    return res.status(400).json({ error: `id_request must be an integer` });
   }
   try {
     let supports = await db.Supports.findAll({
@@ -201,7 +201,7 @@ async function listRequestSupportsHandler(req, res) {
 
 /**
  * @swagger
- * /requests/{id_request}/supports:
+ * /api/requests/{id_request}/supports:
  *  post:
  *    summary: Create a support
  *    tags:
@@ -286,7 +286,7 @@ async function listRequestSupportsHandler(req, res) {
 async function createSupportHandler(req, res) {
   let requestId = req.params.id_request;
   if (isNaN(parseInt(requestId))) {
-    return res.status(400).json({ error: `id_request must be an integer`});
+    return res.status(400).json({ error: `id_request must be an integer` });
   }
   let request = await db.Requests.findByPk(requestId, {
     include: { model: db.Groups, as: "group" },
@@ -313,8 +313,8 @@ async function createSupportHandler(req, res) {
       error: `Supporting user and requesting user must belong to the same group`,
     });
   }
-  if (req.body.content == null){
-    return res.status(400).json({ error: `Data has empty fields`});
+  if (req.body.content == null) {
+    return res.status(400).json({ error: `Data has empty fields` });
   }
   let support = new db.Supports({
     id_request: requestId,
@@ -331,7 +331,7 @@ async function createSupportHandler(req, res) {
 
 /**
  * @swagger
- * /requests/{id_request}:
+ * /api/requests/{id_request}:
  *  get:
  *    summary: Show a request infomation
  *    tags:
@@ -346,7 +346,7 @@ async function createSupportHandler(req, res) {
  *    responses:
  *      200:
  *        description: Return request infomation
- *        
+ *
  *        content:
  *          application/json:
  *            schema:
@@ -403,7 +403,7 @@ async function getRequestHandler(req, res) {
 
 /**
  * @swagger
- * /requests/{id_request}:
+ * /api/requests/{id_request}:
  *  put:
  *    summary: Update a request
  *    tags:
@@ -482,8 +482,8 @@ async function updateRequestHandler(req, res) {
     }
     for (let key in req.body) {
       if (key == "is_deleted") continue;
-      if( req.body[key] == null){
-        return res.status(400).json({ error: `Data has empty fields`});
+      if (req.body[key] == null) {
+        return res.status(400).json({ error: `Data has empty fields` });
       }
       request[key] = req.body[key];
     }
@@ -496,7 +496,7 @@ async function updateRequestHandler(req, res) {
 
 /**
  * @swagger
- * /requests/{id_request}:
+ * /api/requests/{id_request}:
  *  delete:
  *    summary: User deleted request
  *    tags:
