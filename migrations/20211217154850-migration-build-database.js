@@ -73,6 +73,9 @@ module.exports = {
       description: {
         type: Sequelize.TEXT,
       },
+      address: {
+        type: Sequelize.TEXT,
+      },
       name: {
         allowNull: false,
         type: Sequelize.TEXT,

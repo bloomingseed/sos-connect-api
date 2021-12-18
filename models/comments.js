@@ -1,8 +1,8 @@
 const createModel = (sequelize, DataTypes) => {
-  const Supports = sequelize.define(
-    "Supports",
+  const Comments = sequelize.define(
+    "Comments",
     {
-      id_support: {
+      id_comment: {
         primaryKey: true,
         autoIncrement: true,
         type: DataTypes.INTEGER,
@@ -10,22 +10,25 @@ const createModel = (sequelize, DataTypes) => {
       id_request: {
         type: DataTypes.INTEGER,
       },
+      id_support: {
+        type: DataTypes.INTEGER,
+      },
       username: {
         type: DataTypes.STRING,
+      },
+      object_type: {
+        type: DataTypes.INTEGER,
       },
       content: {
         type: DataTypes.TEXT,
       },
-      is_confirmed: {
+      is_deleted: {
+        allowNull: false,
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
       date_created: {
         type: DataTypes.DATE,
-      },
-      is_deleted: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
     },
     {
@@ -34,26 +37,17 @@ const createModel = (sequelize, DataTypes) => {
       updatedAt: false,
     }
   );
-  Supports.associate = function (models) {
-    Supports.belongsTo(models.Requests, {
+  Comments.associate = function (models) {
+    Comments.belongsTo(models.Profiles, { foreignKey: "username", as: "user" });
+    Comments.belongsTo(models.Requests, {
       foreignKey: "id_request",
       as: "request",
     });
-    Supports.hasMany(models.Comments, {
+    Comments.belongsTo(models.Supports, {
       foreignKey: "id_support",
-      scope: {
-        object_type: 1,
-      },
-      as: "comments",
-    });
-    Supports.hasMany(models.Comments, {
-      foreignKey: "id_support",
-      scope: {
-        object_type: 1,
-      },
-      as: "reactions",
+      as: "support",
     });
   };
-  return Supports;
+  return Comments;
 };
 module.exports = createModel;

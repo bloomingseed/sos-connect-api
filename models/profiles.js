@@ -68,7 +68,9 @@ const createModel = (sequelize, DataTypes) => {
       updatedAt: false,
     }
   );
-  Profiles.associate = function (models) {};
+  Profiles.associate = function (models) {
+    Profiles.hasMany(models.Members, { foreignKey: "username", as: "members" });
+  };
   Profiles.afterCreate(async (profile, options) => {
     if (profile.avatar_url == null) {
       let url = `uploads/${profile.username.replace("@", "-")}.png`;

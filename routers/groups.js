@@ -57,18 +57,30 @@ async function getGroup(groupId, res) {
  *                  type: int
  *                description:
  *                  type: string
+ *                address:
+ *                  type: string
  *                name:
+ *                  type: string
+ *                thumbnail_image_url:
+ *                  type: string
+ *                cover_image_url:
  *                  type: string
  *                is_deleted:
  *                  type: boolean
  *                date_created:
  *                  type: string
+ *                total_members:
+ *                  type: int
  *              example:
  *                id_group: 1
  *                description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
+ *                address: Liên Chiểu, Đà Nẵng
  *                name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
+ *                thumbnail_image_url: http://api.sos-connect.asia/uploads/g1-thumbnail.png
+ *                cover_image_url: http://api.sos-connect.asia/uploads/g1-cover.png
  *                is_deleted: true
  *                date_created: 2021-10-29T13:36:14.053Z
+ *                total_members: 2
  *      400:
  *        description: Group ID is not integer
  *        content:
@@ -100,6 +112,11 @@ async function showGroupInfoHandler(req, res) {
   let groupId = req.params.id_group;
   try {
     let group = await getGroup(groupId, res);
+    group.dataValues.total_members = await db.Members.count({
+      where: {
+        id_group: groupId,
+      },
+    });
     return res.status(200).json(group);
   } catch (e) {
     return res.status(500).json({ error: e });
@@ -132,10 +149,19 @@ async function showGroupInfoHandler(req, res) {
  *            properties:
  *              description:
  *                type: string
+ *              address:
+ *                type: string
  *              name:
  *                type: string
+ *              thumbnail_image_url:
+ *                type: string
+ *              cover_image_url:
+ *                type: string
  *            example:
+ *              address: Liên Chiểu, Đà Nẵng
  *              name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
+ *              thumbnail_image_url: http://api.sos-connect.asia/uploads/g1-thumbnail.png
+ *              cover_image_url: http://api.sos-connect.asia/uploads/g1-cover.png
  *              description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
  *    responses:
  *      200:
@@ -469,17 +495,82 @@ async function userJoinsGroupHandler(req, res) {
  *                    type: boolean
  *                  date_created:
  *                    type: string
+ *                  profile:
+ *                    type: object
+ *                    properties:
+ *                      username:
+ *                        type: string
+ *                      last_name:
+ *                        type: string
+ *                      first_name:
+ *                        type: string
+ *                      gender:
+ *                        type: boolean
+ *                      avatar_url:
+ *                        type: string
+ *                      date_of_birth:
+ *                        type: string
+ *                      country:
+ *                        type: string
+ *                      province:
+ *                        type: string
+ *                      district:
+ *                        type: string
+ *                      ward:
+ *                        type: string
+ *                      street:
+ *                        type: string
+ *                      email:
+ *                        type: string
+ *                      phone_number:
+ *                        type: string
+ *                      is_deactivated:
+ *                        type: boolean
+ *                      is_deleted:
+ *                        type: boolean
  *              example:
  *                - username: seeding.user.3
  *                  id_group: 1
  *                  as_role: false
  *                  is_admin_invited: false
  *                  date_created: 2021-10-29T13:36:30.567Z
+ *                  profile:
+ *                    username: seeding.user.3
+ *                    last_name: Nguyễn Văn
+ *                    first_name: Cường
+ *                    gender: true
+ *                    avatar_url: http://api.sos-connect.asia/uploads/seeding.user.3.png
+ *                    date_of_birth: 2000-07-23
+ *                    country: Việt Nam
+ *                    province: Đà Nẵng
+ *                    district: Liên Chiểu
+ *                    ward: Hòa Khánh Bắc
+ *                    street: 1 Ngô Thì Nhậm
+ *                    email: "nvc@mail"
+ *                    phone_number: 0132456789
+ *                    is_deactivated: false
+ *                    is_deleted: false
  *                - username: seeding.user.6
  *                  id_group: 1
  *                  as_role: true
  *                  is_admin_invited: false
  *                  date_created: 2021-10-29T13:36:30.567Z
+ *                  profile:
+ *                    username: seeding.user.6
+ *                    last_name: Nguyễn Văn
+ *                    first_name: Cường
+ *                    gender: true
+ *                    avatar_url: http://api.sos-connect.asia/uploads/seeding.user.6.png
+ *                    date_of_birth: 2000-07-23
+ *                    country: Việt Nam
+ *                    province: Đà Nẵng
+ *                    district: Liên Chiểu
+ *                    ward: Hòa Khánh Bắc
+ *                    street: 1 Ngô Thì Nhậm
+ *                    email: "nvc@mail"
+ *                    phone_number: 0132456789
+ *                    is_deactivated: false
+ *                    is_deleted: false
  *
  *      400:
  *        description: Group ID is not integer
@@ -508,6 +599,10 @@ async function listGroupUsersHandler(req, res) {
   await getGroup(groupId, res);
   try {
     let groups = await db.Members.findAll({
+      include: { 
+        model: db.Profiles,
+        as: 'profile',
+      },
       where: {
         id_group: groupId,
         username: { [Op.like]: `%${searchParams.search}%` },
