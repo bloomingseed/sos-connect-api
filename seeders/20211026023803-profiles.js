@@ -1,5 +1,6 @@
 "use strict";
 const { Profiles } = require("../models");
+const fk = require("faker/locale/vi");
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -11,8 +12,8 @@ module.exports = {
       let districtIndx = (i + 1) % 10;
       seedings.push({
         username: `seeding.user.${i + 1}`,
-        last_name: "Seeding",
-        first_name: `User ${i + 1}`,
+        last_name: fk.name.lastName(),
+        first_name: fk.name.firstName(),
         gender: (i + 1) % 4 != 0,
         date_of_birth: `2000-01-${i + 1 < 10 ? "0" + (i + 1) : i + 1}`,
         country: "Việt Nam",
