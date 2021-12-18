@@ -5,6 +5,7 @@ var Op = require("sequelize").Op;
 
 var requestsRouter = express.Router();
 var requestSupportsRouter = express.Router({ mergeParams: true });
+var requestReactionsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
@@ -366,6 +367,8 @@ async function createSupportHandler(req, res) {
  *                  type: string
  *                is_approved:
  *                  type: boolean
+ *                total_reactions:
+ *                  type: int
  *              example:
  *                id_request: 1
  *                id_group: 2
@@ -374,6 +377,7 @@ async function createSupportHandler(req, res) {
  *                is_deleted: true
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_approved: true
+ *                total_reactions: 5
  *      400:
  *        description: Request does not exist/ id_request is not integer
  *        content:
@@ -395,6 +399,12 @@ async function getRequestHandler(req, res) {
   let id_request = req.params.id_request;
   try {
     let request = await getRequest(id_request, res);
+    request.dataValues.total_reactions = await db.Reactions.count({
+      where: {
+        id_request: id_request,
+        object_type: 0,
+      },
+    });
     return res.status(200).json(request);
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -560,6 +570,161 @@ async function deleteRequestHandler(req, res) {
   }
 }
 
+/**
+ * @swagger
+ * /requests/{id_request}/reaction:
+ *  get:
+ *    summary: Show reactions list for request
+ *    tags:
+ *      - requests
+ *    parameters:
+ *      - name: id_request
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      200:
+ *        description: Return reactions list for request
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              item:
+ *                type: object
+ *                properties:
+ *                  id_reaction:
+ *                    type:int
+ *                  id_request:
+ *                    type:int
+ *                  id_support:
+ *                    type:int
+ *                  username:
+ *                    type: string
+ *                  object_type:
+ *                    type: int
+ *              example:
+ *                - id_reaction: 1
+ *                  id_request: 1
+ *                  id_support: null
+ *                  username: seeding.user.1
+ *                  object_type: 0
+ *                - id_reaction: 2
+ *                  id_request: 1
+ *                  id_support: null
+ *                  username: seeding.user.4
+ *                  object_type: 0
+ *      400:
+ *        description: Request does not exist/ id_request is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request ${id_request} does not exist"
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function listRequestReactionsHandler(req, res){
+  try {
+    await getRequest(req.params.id_request, res);
+    let reactions = await db.Reactions.findAll({
+      where: {
+        id_request: req.params.id_request,
+        object_type: 0,
+      }
+    });
+    return res.status(200).json({ reactions});
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /requests/{id_request}/reactions:
+ *  post:
+ *    summary: Create a reaction
+ *    tags:
+ *      - requests
+ *    security:
+ *      - bearerAuth: []
+ *    parameters:
+ *      - name: id_request
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      201:
+ *        description: Created
+ *      content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_reaction:
+ *                  type:int
+ *                id_request:
+ *                  type:int
+ *                username:
+ *                  type: string
+ *                object_type:
+ *                  type: int
+ *              example:
+ *                id_reaction: 1
+ *                id_request: 1
+ *                username: seeding.user.1
+ *                object_type: 0
+ *      400:
+ *        description: Request does not exist/ id_request is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request ${id_request} does not exist"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request header ‘Authentication’ does not exist or does not contain authentication token."
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function createReactionHandler(req, res){
+  try {
+    await getRequest(req.params.id_request, res);
+    let reaction = await db.Reactions.create({
+      id_request: req.params.id_request,
+      username: req.verifyResult.username,
+      object_type: 0,
+    });
+    return res.status(201).json(reaction);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
 requestsRouter
   .route("/:id_request")
   .get(getRequestHandler)
@@ -570,5 +735,10 @@ requestSupportsRouter
   .route("/")
   .get(listRequestSupportsHandler)
   .post(authUserMiddleware, createSupportHandler);
+requestsRouter.use("/:id_request/reactions", requestReactionsRouter);
+requestReactionsRouter
+  .route("/")
+  .get(listRequestReactionsHandler)
+  .post(authUserMiddleware, createReactionHandler);
 
 module.exports = { router: requestsRouter, name: "requests" };

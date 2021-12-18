@@ -3,6 +3,7 @@ var db = require("../models");
 var { authUserMiddleware } = require("../helpers");
 
 var supportsRouter = express.Router();
+var supportReactionsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
@@ -68,6 +69,8 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
  *                  type: string
  *                is_deleted:
  *                  type: boolean
+ *                total_reactions:
+ *                  type: int
  *              example:
  *                id_request: 1
  *                id_group: 1
@@ -76,6 +79,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
  *                is_confirmed: false
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_deleted: false
+ *                total_reactions: 2
  *      400:
  *        description: Support does not exist/ id_support is not integer
  *        content:
@@ -105,6 +109,12 @@ async function getSupportHandler(req, res) {
         .status(400)
         .json({ error: `Support ID ${supportId} does not exist` });
     }
+    support.dataValues.total_reactions = await db.Reactions.count({
+      where: {
+        id_support: supportId,
+        object_type: 1,
+      },
+    });
     return res.status(200).json(support);
   } catch (e) {
     return res.status(500).json({ error: e });
@@ -260,6 +270,139 @@ async function deleteSupportHandler(req, res) {
   }
 }
 
+/**
+ * @swagger
+ * /supports/{id_support}/reaction:
+ *  get:
+ *    summary: Show reactions list for request
+ *    tags:
+ *      - supports
+ *    parameters:
+ *      - name: id_support
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      200:
+ *        description: Return reactions list for support
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              item:
+ *                type: object
+ *                properties:
+ *                  id_reaction:
+ *                    type:int
+ *                  id_request:
+ *                    type:int
+ *                  id_support:
+ *                    type:int
+ *                  username:
+ *                    type: string
+ *                  object_type:
+ *                    type: int
+ *              example:
+ *                - id_reaction: 1
+ *                  id_request: null
+ *                  id_support: 1
+ *                  username: seeding.user.1
+ *                  object_type: 1
+ *                - id_reaction: 2
+ *                  id_request: null
+ *                  id_support: 1
+ *                  username: seeding.user.4
+ *                  object_type: 1
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+ async function listSupportReactionsHandler(req, res){
+  try {
+    let reactions = await db.Reactions.findAll({
+      where: {
+        id_support: req.params.id_support,
+        object_type: 1,
+      }
+    });
+    return res.status(200).json({ reactions});
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /supports/{id_support}/reactions:
+ *  post:
+ *    summary: Create a reaction
+ *    tags:
+ *      - supports
+ *    security:
+ *      - bearerAuth: []
+ *    parameters:
+ *      - name: id_support
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      201:
+ *        description: Created
+ *      content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_reaction:
+ *                  type:int
+ *                id_support:
+ *                  type:int
+ *                username:
+ *                  type: string
+ *                object_type:
+ *                  type: int
+ *              example:
+ *                id_reaction: 1
+ *                id_support: 1
+ *                username: seeding.user.1
+ *                object_type: 1
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request header ‘Authentication’ does not exist or does not contain authentication token."
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function createReactionHandler(req, res){
+  try {
+    let reaction = await db.Reactions.create({
+      id_support: req.params.id_support,
+      username: req.verifyResult.username,
+      object_type: 1,
+    });
+    return res.status(201).json(reaction);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
 supportsRouter
   .route("/:id_support")
   .get(getSupportHandler)
@@ -269,5 +412,10 @@ supportsRouter
     isUserOwnsSupportMiddleware,
     deleteSupportHandler
   );
+supportsRouter.use("/:id_support/reactions", supportReactionsRouter);
+supportReactionsRouter
+  .route("/")
+  .get(listSupportReactionsHandler)
+  .post(authUserMiddleware, createReactionHandler);
 
 module.exports = { router: supportsRouter, name: "supports" };

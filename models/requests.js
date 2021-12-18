@@ -47,6 +47,13 @@ const createModel = (sequelize, DataTypes) => {
       },
       as: "comments",
     });
+    Requests.hasMany(models.Comments, {
+      foreignKey: "id_request",
+      scope: {
+        object_type: 0,
+      },
+      as: "reactions",
+    });
   };
   return Requests;
 };
