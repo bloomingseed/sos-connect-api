@@ -18,6 +18,9 @@ const createModel = (sequelize, DataTypes) => {
       description: {
         type: DataTypes.TEXT,
       },
+      address: {
+        type: DataTypes.TEXT,
+      },
       name: {
         type: DataTypes.TEXT,
       },
