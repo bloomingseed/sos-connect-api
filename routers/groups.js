@@ -69,6 +69,8 @@ async function getGroup(groupId, res) {
  *                  type: boolean
  *                date_created:
  *                  type: string
+ *                total_members:
+ *                  type: int
  *              example:
  *                id_group: 1
  *                description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
@@ -78,6 +80,7 @@ async function getGroup(groupId, res) {
  *                cover_image_url: http://api.sos-connect.asia/uploads/g1-cover.png
  *                is_deleted: true
  *                date_created: 2021-10-29T13:36:14.053Z
+ *                total_members: 2
  *      400:
  *        description: Group ID is not integer
  *        content:
@@ -109,6 +112,11 @@ async function showGroupInfoHandler(req, res) {
   let groupId = req.params.id_group;
   try {
     let group = await getGroup(groupId, res);
+    group.dataValues.total_members = await db.Members.count({
+      where: {
+        id_group: groupId,
+      },
+    });
     return res.status(200).json(group);
   } catch (e) {
     return res.status(500).json({ error: e });
