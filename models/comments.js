@@ -1,31 +1,34 @@
 const createModel = (sequelize, DataTypes) => {
-  const Requests = sequelize.define(
-    "Requests",
+  const Comments = sequelize.define(
+    "Comments",
     {
-      id_request: {
+      id_comment: {
         primaryKey: true,
         autoIncrement: true,
         type: DataTypes.INTEGER,
       },
-      id_group: {
+      id_request: {
+        type: DataTypes.INTEGER,
+      },
+      id_support: {
         type: DataTypes.INTEGER,
       },
       username: {
         type: DataTypes.STRING,
       },
+      object_type: {
+        type: DataTypes.INTEGER,
+      },
       content: {
         type: DataTypes.TEXT,
       },
       is_deleted: {
+        allowNull: false,
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
       date_created: {
         type: DataTypes.DATE,
-      },
-      is_approved: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
     },
     {
@@ -34,20 +37,17 @@ const createModel = (sequelize, DataTypes) => {
       updatedAt: false,
     }
   );
-  Requests.associate = function (models) {
-    Requests.belongsTo(models.Groups, { foreignKey: "id_group", as: "group" });
-    Requests.hasMany(models.Supports, {
+  Comments.associate = function (models) {
+    Comments.belongsTo(models.Profiles, { foreignKey: "username", as: "user" });
+    Comments.belongsTo(models.Requests, {
       foreignKey: "id_request",
-      as: "supports",
+      as: "request",
     });
-    Requests.hasMany(models.Comments, {
-      foreignKey: "id_request",
-      scope: {
-        object_type: 0,
-      },
-      as: "comments",
+    Comments.belongsTo(models.Supports, {
+      foreignKey: "id_support",
+      as: "support",
     });
   };
-  return Requests;
+  return Comments;
 };
 module.exports = createModel;
