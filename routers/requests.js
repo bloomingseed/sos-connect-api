@@ -6,6 +6,7 @@ var Op = require("sequelize").Op;
 var requestsRouter = express.Router();
 var requestSupportsRouter = express.Router({ mergeParams: true });
 var requestReactionsRouter = express.Router({ mergeParams: true });
+var requestCommentsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
@@ -572,7 +573,7 @@ async function deleteRequestHandler(req, res) {
 
 /**
  * @swagger
- * /requests/{id_request}/reaction:
+ * /requests/{id_request}/reactions:
  *  get:
  *    summary: Show reactions list for request
  *    tags:
@@ -632,16 +633,16 @@ async function deleteRequestHandler(req, res) {
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function listRequestReactionsHandler(req, res){
+async function listRequestReactionsHandler(req, res) {
   try {
     await getRequest(req.params.id_request, res);
     let reactions = await db.Reactions.findAll({
       where: {
         id_request: req.params.id_request,
         object_type: 0,
-      }
+      },
     });
-    return res.status(200).json({ reactions});
+    return res.status(200).json({ reactions });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -711,7 +712,7 @@ async function listRequestReactionsHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function createReactionHandler(req, res){
+async function createReactionHandler(req, res) {
   try {
     await getRequest(req.params.id_request, res);
     let reaction = await db.Reactions.create({
@@ -720,6 +721,202 @@ async function createReactionHandler(req, res){
       object_type: 0,
     });
     return res.status(201).json(reaction);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /requests/{id_request}/comments:
+ *  get:
+ *    summary: Show request's comments
+ *    tags:
+ *      - requests
+ *    parameters:
+ *      - name: id_request
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      200:
+ *        description: Return request's comments
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              item:
+ *                type: object
+ *                properties:
+ *                  id_comment:
+ *                    type:int
+ *                  id_request:
+ *                    type:int
+ *                  id_support:
+ *                    type:int
+ *                  username:
+ *                    type: string
+ *                  object_type:
+ *                    type: int
+ *                  content:
+ *                    type: string
+ *                  is_deleted:
+ *                    type: boolean
+ *                  date_created:
+ *                    type: string
+ *              example:
+ *                - id_comment: 1
+ *                  id_request: 1
+ *                  id_support: null
+ *                  username: seeding.user.1
+ *                  object_type: 0
+ *                  content: "SOS Connect is so aweomse!"
+ *                  is_deleted: false
+ *                  date_created: 2021-12-18T13:28:56.000Z
+ *                - id_comment: 2
+ *                  id_request: 1
+ *                  id_support: null
+ *                  username: seeding.user.4
+ *                  object_type: 0
+ *                  content: "SOS Connect is so aweomse!"
+ *                  is_deleted: false
+ *                  date_created: 2021-12-18T13:28:56.000Z
+ *      400:
+ *        description: Request does not exist/ id_request is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request ${id_request} does not exist"
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function listCommentsHandler(req, res) {
+  try {
+    await getRequest(req.params.id_request, res);
+    let comments = await db.Comments.findAll({
+      where: {
+        id_request: req.params.id_request,
+        object_type: 0,
+      },
+    });
+    return res.status(201).json(comments);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /requests/{id_request}/comments:
+ *  post:
+ *    summary: Create a comment
+ *    tags:
+ *      - requests
+ *    security:
+ *      - bearerAuth: []
+ *    parameters:
+ *      - name: id_request
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              content:
+ *                type: string
+ *                required: true
+ *                describe: Comment content
+ *            example:
+ *              content: "This request is awesome"
+ *    responses:
+ *      201:
+ *        description: Created comment
+ *      content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_reaction:
+ *                  type:int
+ *                id_request:
+ *                  type:int
+ *                username:
+ *                  type: string
+ *                object_type:
+ *                  type: int
+ *                content:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *              example:
+ *                id_reaction: 1
+ *                id_request: 1
+ *                username: seeding.user.1
+ *                object_type: 0
+ *                content: "This request is awesome"
+ *                is_deleted: false
+ *                date_created: 2021-12-18T13:28:56.000Z
+ *      400:
+ *        description: Request does not exist/ id_request is not integer or comment is blank
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request ${id_request} does not exist"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request header ‘Authentication’ does not exist or does not contain authentication token."
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function createCommentHandler(req, res) {
+  try {
+    await getRequest(req.params.id_request, res);
+    let content = req.body.content;
+    if (content == null || typeof content != "string" || content.trim() == "") {
+      return res.status(400).json({
+        error: "Comment is either not provided, not a string, or is blank",
+      });
+    }
+    let comment = await db.Comments.create({
+      id_request: req.params.id_request,
+      username: req.verifyResult.username,
+      object_type: 0,
+      content,
+    });
+    return res.status(201).json(comment);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -740,5 +937,10 @@ requestReactionsRouter
   .route("/")
   .get(listRequestReactionsHandler)
   .post(authUserMiddleware, createReactionHandler);
+requestsRouter.use("/:id_request/comments", requestCommentsRouter);
+requestCommentsRouter
+  .route("/")
+  .get(listCommentsHandler)
+  .post(authUserMiddleware, createCommentHandler);
 
 module.exports = { router: requestsRouter, name: "requests" };

@@ -4,6 +4,7 @@ var { authUserMiddleware } = require("../helpers");
 
 var supportsRouter = express.Router();
 var supportReactionsRouter = express.Router({ mergeParams: true });
+var supportCommentsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
@@ -272,7 +273,7 @@ async function deleteSupportHandler(req, res) {
 
 /**
  * @swagger
- * /supports/{id_support}/reaction:
+ * /supports/{id_support}/reactions:
  *  get:
  *    summary: Show reactions list for request
  *    tags:
@@ -322,15 +323,15 @@ async function deleteSupportHandler(req, res) {
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
- async function listSupportReactionsHandler(req, res){
+async function listSupportReactionsHandler(req, res) {
   try {
     let reactions = await db.Reactions.findAll({
       where: {
         id_support: req.params.id_support,
         object_type: 1,
-      }
+      },
     });
-    return res.status(200).json({ reactions});
+    return res.status(200).json({ reactions });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -390,7 +391,7 @@ async function deleteSupportHandler(req, res) {
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function createReactionHandler(req, res){
+async function createReactionHandler(req, res) {
   try {
     let reaction = await db.Reactions.create({
       id_support: req.params.id_support,
@@ -398,6 +399,203 @@ async function createReactionHandler(req, res){
       object_type: 1,
     });
     return res.status(201).json(reaction);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /supports/{id_support}/comments:
+ *  get:
+ *    summary: Show support's comments
+ *    tags:
+ *      - supports
+ *    parameters:
+ *      - name: id_support
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      200:
+ *        description: Return support's comments
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              item:
+ *                type: object
+ *                properties:
+ *                  id_comment:
+ *                    type:int
+ *                  id_request:
+ *                    type:int
+ *                  id_support:
+ *                    type:int
+ *                  username:
+ *                    type: string
+ *                  object_type:
+ *                    type: int
+ *                  content:
+ *                    type: string
+ *                  is_deleted:
+ *                    type: boolean
+ *                  date_created:
+ *                    type: string
+ *              example:
+ *                - id_comment: 1
+ *                  id_request: null
+ *                  id_support: 1
+ *                  username: seeding.user.1
+ *                  object_type: 1
+ *                  content: "SOS Connect is so aweomse!"
+ *                  is_deleted: false
+ *                  date_created: 2021-12-18T13:28:56.000Z
+ *                - id_comment: 2
+ *                  id_request: null
+ *                  id_support: 1
+ *                  username: seeding.user.4
+ *                  object_type: 1
+ *                  content: "SOS Connect is so aweomse!"
+ *                  is_deleted: false
+ *                  date_created: 2021-12-18T13:28:56.000Z
+ *      400:
+ *        description: Support does not exist/ id_support is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Support ${id_support} does not exist"
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function listCommentsHandler(req, res) {
+  try {
+    let comments = await db.Comments.findAll({
+      where: {
+        id_support: req.params.id_support,
+        object_type: 1,
+      },
+    });
+    return res.status(201).json(comments);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /supports/{id_support}/comments:
+ *  post:
+ *    summary: Create a comment
+ *    tags:
+ *      - supports
+ *    security:
+ *      - bearerAuth: []
+ *    parameters:
+ *      - name: id_support
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              content:
+ *                type: string
+ *                required: true
+ *                describe: Comment content
+ *            example:
+ *              content: "This support is awesome"
+ *    responses:
+ *      201:
+ *        description: Created comment
+ *      content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_comment:
+ *                  type:int
+ *                id_request:
+ *                  type:int
+ *                id_support:
+ *                  type:int
+ *                username:
+ *                  type: string
+ *                object_type:
+ *                  type: int
+ *                content:
+ *                  type: string
+ *                is_deleted:
+ *                  type: boolean
+ *                date_created:
+ *                  type: string
+ *              example:
+ *                id_comment: 1
+ *                id_request: null
+ *                id_support: 1
+ *                username: seeding.user.1
+ *                object_type: 1
+ *                content: "This support is awesome"
+ *                is_deleted: false
+ *                date_created: 2021-12-18T13:28:56.000Z
+ *      400:
+ *        description: Support does not exist/ id_support is not integer or comment is blank
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Support ${id_support} does not exist"
+ *      403:
+ *        description: Failed to authorize support/ Access token is invalid
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request header ‘Authentication’ does not exist or does not contain authentication token."
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function createCommentHandler(req, res) {
+  try {
+    let content = req.body.content;
+    if (content == null || typeof content != "string" || content.trim() == "") {
+      return res.status(400).json({
+        error: "Comment is either not provided, not a string, or is blank",
+      });
+    }
+    let comment = await db.Comments.create({
+      id_support: req.params.id_support,
+      username: req.verifyResult.username,
+      object_type: 1,
+      content,
+    });
+    return res.status(201).json(comment);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -417,5 +615,10 @@ supportReactionsRouter
   .route("/")
   .get(listSupportReactionsHandler)
   .post(authUserMiddleware, createReactionHandler);
+supportsRouter.use("/:id_support/comments", supportCommentsRouter);
+supportCommentsRouter
+  .route("/")
+  .get(listCommentsHandler)
+  .post(authUserMiddleware, createCommentHandler);
 
 module.exports = { router: supportsRouter, name: "supports" };
