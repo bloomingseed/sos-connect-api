@@ -437,7 +437,7 @@ async function userJoinsGroupHandler(req, res) {
     });
     return res.status(201).json(member);
   } catch (e) {
-    if (e.parent.code == DUP_KEY_ERRCODE) {
+    if (e.parent.code == DUP_KEY_ERRCODE || e.parent.code == "ER_DUP_ENTRY") {
       return res.status(400).json({
         error: `User ${req.verifyResult.username} has already joined group ${groupId}`,
       });

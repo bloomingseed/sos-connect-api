@@ -4,6 +4,7 @@ var { authUserMiddleware } = require("../helpers");
 
 var supportsRouter = express.Router();
 var supportReactionsRouter = express.Router({ mergeParams: true });
+var supportCommentsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
@@ -71,6 +72,8 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
  *                  type: boolean
  *                total_reactions:
  *                  type: int
+ *                total_comments:
+ *                  type: int
  *              example:
  *                id_request: 1
  *                id_group: 1
@@ -80,6 +83,7 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_deleted: false
  *                total_reactions: 2
+ *                total_comments: 1
  *      400:
  *        description: Support does not exist/ id_support is not integer
  *        content:
@@ -110,6 +114,12 @@ async function getSupportHandler(req, res) {
         .json({ error: `Support ID ${supportId} does not exist` });
     }
     support.dataValues.total_reactions = await db.Reactions.count({
+      where: {
+        id_support: supportId,
+        object_type: 1,
+      },
+    });
+    support.dataValues.total_comments = await db.Comments.count({
       where: {
         id_support: supportId,
         object_type: 1,
@@ -270,9 +280,22 @@ async function deleteSupportHandler(req, res) {
   }
 }
 
+async function getSupport(id_support, res) {
+  if (isNaN(parseInt(id_support))) {
+    return res.status(400).json({ error: `id_support must be an integer`});
+  }
+  let support = await db.Supports.findByPk(id_support);
+  if (support == null) {
+    return res
+      .status(400)
+      .json({ error: `Support ${id_support} does not exist` });
+  }
+  return support;
+}
+
 /**
  * @swagger
- * /supports/{id_support}/reaction:
+ * /supports/{id_support}/reactions:
  *  get:
  *    summary: Show reactions list for request
  *    tags:
@@ -315,6 +338,16 @@ async function deleteSupportHandler(req, res) {
  *                  id_support: 1
  *                  username: seeding.user.4
  *                  object_type: 1
+ *      400:
+ *        description: Request does not exist/ id_support is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Support ${id_support} does not exist"
  *      500:
  *        description: Account failed to register due to server error
  *        content:
@@ -322,8 +355,9 @@ async function deleteSupportHandler(req, res) {
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
- async function listSupportReactionsHandler(req, res){
+async function listSupportReactionsHandler(req, res){
   try {
+    await getSupport(req.params.id_support, res);
     let reactions = await db.Reactions.findAll({
       where: {
         id_support: req.params.id_support,
@@ -355,7 +389,7 @@ async function deleteSupportHandler(req, res) {
  *    responses:
  *      201:
  *        description: Created
- *      content:
+ *        content:
  *          application/json:
  *            schema:
  *              type: object
@@ -373,6 +407,16 @@ async function deleteSupportHandler(req, res) {
  *                id_support: 1
  *                username: seeding.user.1
  *                object_type: 1
+ *      400:
+ *        description: Request does not exist/ id_support is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Support ${id_support} does not exist"
  *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
@@ -392,12 +436,194 @@ async function deleteSupportHandler(req, res) {
  */
 async function createReactionHandler(req, res){
   try {
+    await getSupport(req.params.id_support, res);
     let reaction = await db.Reactions.create({
       id_support: req.params.id_support,
       username: req.verifyResult.username,
       object_type: 1,
     });
     return res.status(201).json(reaction);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /supports/{id_support}/comments:
+ *  get:
+ *    summary: Show comments list for request
+ *    tags:
+ *      - supports
+ *    parameters:
+ *      - name: id_support
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      200:
+ *        description: Return comments list for support
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              item:
+ *                type: object
+ *                properties:
+ *                  id_comment:
+ *                    type:int
+ *                  id_request:
+ *                    type:int
+ *                  id_support:
+ *                    type:int
+ *                  username:
+ *                    type: string
+ *                  object_type:
+ *                    type: int
+ *                  content:
+ *                    type:string
+ *                  is_deleted:
+ *                    type:boolean
+ *                  date_created:
+ *                    type:string
+ *              example:
+ *                - id_comment: 4
+ *                  id_request: null
+ *                  id_support: 1
+ *                  username: seeding.user.1
+ *                  object_type: 1
+ *                  content: comment support
+ *                  is_deleted: false
+ *                  date_created: 2021-12-18T12:57:40.000Z
+ *                - id_comment: 6
+ *                  id_request: null
+ *                  id_support: 1
+ *                  username: seeding.user.3
+ *                  object_type: 1
+ *                  content: comment support
+ *                  is_deleted: false
+ *                  date_created: 2021-12-19T12:57:40.000Z
+ *      400:
+ *        description: Request does not exist/ id_support is not integer
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Support ${id_support} does not exist"
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function listSupportCommentsHandler(req, res){
+  try {
+    await getSupport(req.params.id_support, res);
+    let comment = await db.Comments.findAll({
+      where: {
+        id_support: req.params.id_support,
+        object_type: 1,
+      }
+    });
+    return res.status(200).json({ comment});
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+/**
+ * @swagger
+ * /supports/{id_support}/comments:
+ *  post:
+ *    summary: Create a comment
+ *    tags:
+ *      - supports
+ *    security:
+ *      - bearerAuth: []
+ *    parameters:
+ *      - name: id_support
+ *        required: true
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
+ *    responses:
+ *      201:
+ *        description: Created
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                id_comment:
+ *                  type:int
+ *                id_support:
+ *                  type:int
+ *                username:
+ *                  type: string
+ *                object_type:
+ *                  type: int
+ *                content:
+ *                  type:string
+ *                is_deleted:
+ *                  type:boolean
+ *                date_created:
+ *                  type:string
+ *              example:
+ *                id_comment: 5
+ *                id_support: 1
+ *                username: seeding.user.1
+ *                object_type: 0
+ *                content: comment support
+ *                is_deleted: false
+ *                date_created: 2021-12-18T12:57:40.000Z
+ *      400:
+ *        description: Request does not exist/ id_support is not integer/ Content is empty
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Support ${id_support} does not exist"
+ *      403:
+ *        description: Failed to authorize request/ Access token is invalid
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Request header ‘Authentication’ does not exist or does not contain authentication token."
+ *      500:
+ *        description: Account failed to register due to server error
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: "#/components/schemas/Response Error"
+ */
+async function createCommentHandler(req, res){
+  try {
+    await getSupport(req.params.id_support, res);
+    let content = req.body.content;
+    if (content == null){
+      return res.status(400).json({ error: `Content is empty` });
+    }
+    let comment = await db.Comments.create({
+      id_support: req.params.id_support,
+      username: req.verifyResult.username,
+      object_type: 1,
+      content: content,
+    });
+    return res.status(201).json(comment);
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -417,5 +643,10 @@ supportReactionsRouter
   .route("/")
   .get(listSupportReactionsHandler)
   .post(authUserMiddleware, createReactionHandler);
+supportsRouter.use("/:id_support/comments", supportCommentsRouter);
+supportCommentsRouter
+  .route("/")
+  .get(listSupportCommentsHandler)
+  .post(authUserMiddleware, createCommentHandler);
 
 module.exports = { router: supportsRouter, name: "supports" };
