@@ -1,3 +1,4 @@
+var Op = require("sequelize").Op;
 const createModel = (sequelize, DataTypes) => {
   const Supports = sequelize.define(
     "Supports",
@@ -46,12 +47,31 @@ const createModel = (sequelize, DataTypes) => {
       },
       as: "comments",
     });
-    Supports.hasMany(models.Comments, {
+    Supports.hasMany(models.Reactions, {
       foreignKey: "id_support",
       scope: {
         object_type: 1,
       },
       as: "reactions",
+    });
+    Supports.hasMany(models.Images, {
+      foreignKey: "id_support",
+      scope: {
+        object_type: 1,
+      },
+      as: "images",
+    });
+  };
+  Supports.prototype.deleteCurrentImages = async function (db) {
+    let imageIdList = await this.getImages({ attributes: ["id_image"] });
+    if (imageIdList.length == 0) return;
+
+    return db.Images.destroy({
+      where: {
+        id_image: {
+          [Op.in]: imageIdList.map((elm) => elm.id_image),
+        },
+      },
     });
   };
   return Supports;

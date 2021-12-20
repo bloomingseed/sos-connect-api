@@ -1,6 +1,9 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware } = require("../helpers");
+var {
+  authUserMiddleware,
+  validateImagesParamMiddleware,
+} = require("../helpers");
 var Op = require("sequelize").Op;
 
 var requestsRouter = express.Router();
@@ -145,6 +148,13 @@ async function adminSetsApprovalHandler(req, res) {
  *                    type: string
  *                  is_deleted:
  *                    type: boolean
+ *                  images:
+ *                    type: array
+ *                    item:
+ *                      type: object
+ *                      properties:
+ *                        url:
+ *                          type: string
  *              example:
  *                - id_support: 1
  *                  id_request: 1
@@ -153,6 +163,9 @@ async function adminSetsApprovalHandler(req, res) {
  *                  is_confirmed: false
  *                  date_created: 2021-10-29T13:36:48.562Z
  *                  is_deleted: false
+ *                  images:
+ *                    - url: "https://viraland.vn/wp-content/uploads/2020/04/Thue-phong-tro-da-nang-theo-nhu-cau.jpg"
+ *                    - url: "http://baoninhbinh.org.vn/DATA/ARTICLES/2020/10/19/ho-tro-nguoi-dan-vuot-qua-kho-khan-va-khac-phuc-hau-qua-11543.jpg"
  *                - id_support: 2
  *                  id_request: 1
  *                  username: seeding.user.16
@@ -160,6 +173,7 @@ async function adminSetsApprovalHandler(req, res) {
  *                  is_confirmed: false
  *                  date_created: 2021-10-29T13:36:48.562Z
  *                  is_deleted: false
+ *                  images: []
  *      400:
  *        description: Request does not exist/ id_request is not integer
  *        content:
@@ -194,6 +208,11 @@ async function listRequestSupportsHandler(req, res) {
         is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
+      include: {
+        model: db.Images,
+        as: "images",
+        attributes: ["url"],
+      },
     });
     return res.status(200).json(supports);
   } catch (e) {
@@ -226,8 +245,16 @@ async function listRequestSupportsHandler(req, res) {
  *            properties:
  *              content:
  *                type: string
+ *              images:
+ *                type: array
+ *                item:
+ *                  type: object
+ *                  properties:
+ *                    url:
+ *                      type: string
  *            example:
  *              content: I dont have the items needed but i will send you some $$$
+ *              images: []
  *    responses:
  *      201:
  *        description: Created
@@ -250,6 +277,13 @@ async function listRequestSupportsHandler(req, res) {
  *                  type: string
  *                is_deleted:
  *                  type: boolean
+ *                images:
+ *                  type: array
+ *                  item:
+ *                    type: object
+ *                    properties:
+ *                      url:
+ *                        type: string
  *              example:
  *                id_request: 1
  *                id_group: 1
@@ -258,8 +292,9 @@ async function listRequestSupportsHandler(req, res) {
  *                is_confirmed: false
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_deleted: false
+ *                images: []
  *      400:
- *        description: Request does not exist/ User is not the creator of the request/ User is not member of a group/ id_request is not integer
+ *        description: Request does not exist/ User is not the creator of the request/ User is not member of a group/ id_request is not integer/ "images" field does not contain objects with key "url" / image url not valid
  *        content:
  *          application/json:
  *            schema:
@@ -325,6 +360,19 @@ async function createSupportHandler(req, res) {
   });
   try {
     await support.save();
+
+    let tasks = [];
+    for (let image of req.body.images) {
+      tasks.push(
+        db.Images.create({
+          id_support: support.id,
+          object_type: 1,
+          url: image.url,
+        })
+      );
+    }
+    support.images = req.body.images;
+    await Promise.all(tasks);
     return res.status(201).json(support);
   } catch (e) {
     return res.status(500).json({ error: e });
@@ -373,6 +421,13 @@ async function createSupportHandler(req, res) {
  *                  type: int
  *                total_supports:
  *                  type: int
+ *                images:
+ *                  type: array
+ *                  item:
+ *                    type: object
+ *                    properties:
+ *                      url:
+ *                        type: string
  *              example:
  *                id_request: 1
  *                id_group: 2
@@ -384,6 +439,7 @@ async function createSupportHandler(req, res) {
  *                total_reactions: 5
  *                total_comments: 2
  *                total_supports: 1
+ *                images: []
  *      400:
  *        description: Request does not exist/ id_request is not integer
  *        content:
@@ -422,6 +478,9 @@ async function getRequestHandler(req, res) {
         id_request: id_request,
       },
     });
+    request.dataValues.images = await request.getImages({
+      attributes: ["url"],
+    });
     return res.status(200).json(request);
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -453,13 +512,23 @@ async function getRequestHandler(req, res) {
  *            properties:
  *              content:
  *                type: string
+ *              images:
+ *                type: array
+ *                item:
+ *                  type: object
+ *                  properties:
+ *                    url:
+ *                      type: string
  *            example:
  *              content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. instant noodles\n2. milk\n3. pumpkin\n4. eggs
+ *              images:
+ *                - url: "https://vifon.com.vn/vnt_upload/product/mi/mi-tom-chua-cay-VIFON.png"
+ *                - url: "https://hoianuong.vn/hinh-anh-trung-ga-ta/imager_89991.jpg"
  *    responses:
  *      200:
  *        description: Updated
  *      400:
- *        description: Request does not exist/ id_request is not integer
+ *        description: Request does not exist/ id_request is not integer/ "images" field does not contain objects with key "url" / image url not valid
  *        content:
  *          application/json:
  *            schema:
@@ -515,6 +584,17 @@ async function updateRequestHandler(req, res) {
       request[key] = req.body[key];
     }
     await request.save();
+    let tasks = [];
+    tasks.push(request.deleteCurrentImages(db));
+    for (let image of request.images) {
+      tasks.push(
+        db.Images.create({
+          id_request: request.id_request,
+          object_type: 0,
+          url: image.url,
+        })
+      );
+    }
     return res.sendStatus(200);
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -926,13 +1006,17 @@ async function createCommentHandler(req, res){
 requestsRouter
   .route("/:id_request")
   .get(getRequestHandler)
-  .put(authUserMiddleware, updateRequestHandler)
+  .put(authUserMiddleware, validateImagesParamMiddleware, updateRequestHandler)
   .delete(authUserMiddleware, deleteRequestHandler);
 requestsRouter.use("/:id_request/supports", requestSupportsRouter);
 requestSupportsRouter
   .route("/")
   .get(listRequestSupportsHandler)
-  .post(authUserMiddleware, createSupportHandler);
+  .post(
+    authUserMiddleware,
+    validateImagesParamMiddleware,
+    createSupportHandler
+  );
 requestsRouter.use("/:id_request/reactions", requestReactionsRouter);
 requestReactionsRouter
   .route("/")
