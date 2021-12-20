@@ -247,6 +247,16 @@ async function updateSupportHandler(req, res) {
  *                error:
  *                  type: string
  *                  example: "Support ID ${id_support} does not exist"
+ *      401:
+ *        description: User is not the creator of the support and admin
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "User must be ${support.username} or admin"
  *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
@@ -268,8 +278,10 @@ async function updateSupportHandler(req, res) {
 async function deleteSupportHandler(req, res) {
   let username = req.verifyResult.username;
   let support = req.support;
-  if (req.isUserOwnsSupport === false) {
-    return res.sendStatus(401);
+  if (req.isUserOwnsSupport === false && req.verifyResult.is_admin == false) {
+    return res
+        .status(401)
+        .json({ error: `User must be ${support.username} or admin` });
   }
   support.is_deleted = req.body.is_deleted || true;
   try {

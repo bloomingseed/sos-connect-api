@@ -499,7 +499,7 @@ async function updateUserProfileHandler(req, res){
  *                  type: string
  *                  example: "Username ${username} does not exist"
  *      401:
- *        description: User is not username
+ *        description: User is not username and admin
  *        content:
  *          application/json:
  *            schema:
@@ -527,8 +527,8 @@ async function updateUserProfileHandler(req, res){
  */
 async function deleteUserProfileHandler(req, res){
   let username = req.params.username;
-  if (req.verifyResult.username != username){
-    return res.status(401).json({ error: `User must be ${username}` });
+  if (req.verifyResult.username != username && req.verifyResult.is_admin == false){
+    return res.status(401).json({ error: `User must be ${username} or admin` });
   }
   try {
     let profile = await getUserProfile(username, res);

@@ -544,7 +544,7 @@ async function updateRequestHandler(req, res) {
  *                  type: string
  *                  example: "Request ${id_request} does not exist"
  *      401:
- *        description: User is not the creator of the request
+ *        description: User is not the creator of the request and admin
  *        content:
  *          application/json:
  *            schema:
@@ -552,7 +552,7 @@ async function updateRequestHandler(req, res) {
  *              properties:
  *                error:
  *                  type: string
- *                  example: "User must be ${request.username}"
+ *                  example: "User must be ${request.username} or admin"
  *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
@@ -574,10 +574,10 @@ async function deleteRequestHandler(req, res) {
   let id_request = req.params.id_request;
   try {
     let request = await getRequest(id_request, res);
-    if (req.verifyResult.username != request.username) {
+    if (req.verifyResult.username != request.username && req.verifyResult.is_admin == false) {
       return res
         .status(401)
-        .json({ error: `User must be ${request.username}` });
+        .json({ error: `User must be ${request.username} or admin` });
     }
     request.is_deleted = true;
     await request.save();
