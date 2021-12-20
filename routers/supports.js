@@ -529,7 +529,8 @@ async function listSupportCommentsHandler(req, res){
       where: {
         id_support: req.params.id_support,
         object_type: 1,
-      }
+      },
+      order: [['date_created', 'desc']],
     });
     return res.status(200).json({ comment});
   } catch (error) {

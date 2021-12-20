@@ -180,8 +180,8 @@ async function adminSetsApprovalHandler(req, res) {
 async function listRequestSupportsHandler(req, res) {
   let searchParams = {
     search: req.query.search || "",
-    field: req.query.field || "id_support",
-    sort: req.query.sort || "asc",
+    field: req.query.field || "date_created",
+    sort: req.query.sort || "desc",
   };
   if (isNaN(parseInt(req.params.id_request))) {
     return res.status(400).json({ error: `id_request must be an integer`});
@@ -823,7 +823,8 @@ async function listRequestCommentsHandler(req, res){
       where: {
         id_request: req.params.id_request,
         object_type: 0,
-      }
+      },
+      order: [['date_created', 'desc']],
     });
     return res.status(200).json({ comments});
   } catch (error) {

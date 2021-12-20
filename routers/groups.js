@@ -592,8 +592,8 @@ async function userJoinsGroupHandler(req, res) {
 async function listGroupUsersHandler(req, res) {
   let searchParams = {
     search: req.query.search || "",
-    field: req.query.field || "id_group",
-    sort: req.query.sort || "asc",
+    field: req.query.field || "date_created",
+    sort: req.query.sort || "desc",
   };
   let groupId = req.params.id_group;
   await getGroup(groupId, res);
@@ -679,8 +679,8 @@ async function listGroupUsersHandler(req, res) {
 async function listGroupsHandler(req, res) {
   let searchParams = {
     search: req.query.search || "",
-    field: req.query.field || "id_group",
-    sort: req.query.sort || "asc",
+    field: req.query.field || "date_created",
+    sort: req.query.sort || "desc",
   };
   console.log(searchParams);
   try {
@@ -881,8 +881,8 @@ async function getListGroupRequestHandler(req, res) {
     await getGroup(groupId, res);
     let searchParams = {
       search: req.query.search || "",
-      field: req.query.field || "id_request",
-      sort: req.query.sort || "asc",
+      field: req.query.field || "date_created",
+      sort: req.query.sort || "desc",
     };
     let requests = await db.Requests.findAll({
       where: {

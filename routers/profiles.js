@@ -617,6 +617,7 @@ async function getListProfileRequestsHandler(req, res){
         username: username,
         is_deleted: false,
       },
+      order: [['date_created', 'desc']],
     });
     return res.status(200).json(requests);
   } catch (error) {
