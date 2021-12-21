@@ -48,8 +48,25 @@ function validateImagesParamMiddleware(req, res, next) {
   next();
 }
 
+function pagination(totalItems, page, res) {
+  if (isNaN(parseInt(page))) {
+    return res.status(400).json({ error: `Page must be an integer` });
+  }
+  if (page < 1) {
+    return res.status(400).json({ error: `Page must be larger than 0` });
+  }
+  const limit = 10;
+  const totalPages = Math.ceil(totalItems / limit);
+  if (page > totalPages) {
+    return res.status(400).json({ error: `Total pages are ${totalPages}` });
+  }
+  const offset = (page - 1) * limit;
+  return { limit, offset, totalPages };
+}
+
 module.exports = {
   getAuthToken,
   authUserMiddleware,
   validateImagesParamMiddleware,
+  pagination,
 };

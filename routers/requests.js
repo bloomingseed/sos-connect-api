@@ -3,6 +3,7 @@ var db = require("../models");
 var {
   authUserMiddleware,
   validateImagesParamMiddleware,
+  pagination,
 } = require("../helpers");
 var Op = require("sequelize").Op;
 
@@ -13,7 +14,7 @@ var requestCommentsRouter = express.Router({ mergeParams: true });
 
 /**
  * @swagger
- * tags: 
+ * tags:
  *  name: requests
  *  description: Requests related APIs
  */
@@ -21,7 +22,7 @@ var requestCommentsRouter = express.Router({ mergeParams: true });
 //get request middleware
 async function getRequest(id_request, res) {
   if (isNaN(parseInt(id_request))) {
-    return res.status(400).json({ error: `id_request must be an integer`});
+    return res.status(400).json({ error: `id_request must be an integer` });
   }
   let request = await db.Requests.findByPk(id_request);
   if (request == null) {
@@ -124,6 +125,11 @@ async function adminSetsApprovalHandler(req, res) {
  *        require: true
  *        type: string
  *        example: asc
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return supports list for request
@@ -175,7 +181,7 @@ async function adminSetsApprovalHandler(req, res) {
  *                  is_deleted: false
  *                  images: []
  *      400:
- *        description: Request does not exist/ id_request is not integer
+ *        description: Request does not exist/ id_request is not integer/ page is not integer/ page is less than 0/ page is larger total page
  *        content:
  *          application/json:
  *            schema:
@@ -194,13 +200,37 @@ async function adminSetsApprovalHandler(req, res) {
 async function listRequestSupportsHandler(req, res) {
   let searchParams = {
     search: req.query.search || "",
-    field: req.query.field || "id_support",
-    sort: req.query.sort || "asc",
+    field: req.query.field || "date_created",
+    sort: req.query.sort || "desc",
   };
   if (isNaN(parseInt(req.params.id_request))) {
-    return res.status(400).json({ error: `id_request must be an integer`});
+    return res.status(400).json({ error: `id_request must be an integer` });
   }
+  const page = req.query.page;
   try {
+    if (page == null) {
+      let supports = await db.Supports.findAll({
+        where: {
+          id_request: req.params.id_request,
+          username: { [Op.like]: `%${searchParams.search}%` },
+          is_deleted: false,
+        },
+        order: [[searchParams.field, searchParams.sort]],
+      });
+      return res.status(200).json(supports);
+    }
+    total_supports = await db.Supports.count({
+      where: {
+        id_request: req.params.id_request,
+        username: { [Op.like]: `%${searchParams.search}%` },
+        is_deleted: false,
+      },
+    });
+    const { limit, offset, totalPages } = await pagination(
+      total_supports,
+      page,
+      res
+    );
     let supports = await db.Supports.findAll({
       where: {
         id_request: req.params.id_request,
@@ -213,8 +243,15 @@ async function listRequestSupportsHandler(req, res) {
         as: "images",
         attributes: ["url"],
       },
+      limit: limit,
+      offset: offset,
     });
-    return res.status(200).json(supports);
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_supports: total_supports,
+      supports: supports,
+    });
   } catch (e) {
     return res.status(500).json({ error: e.parent });
   }
@@ -323,7 +360,7 @@ async function listRequestSupportsHandler(req, res) {
 async function createSupportHandler(req, res) {
   let requestId = req.params.id_request;
   if (isNaN(parseInt(requestId))) {
-    return res.status(400).json({ error: `id_request must be an integer`});
+    return res.status(400).json({ error: `id_request must be an integer` });
   }
   let request = await db.Requests.findByPk(requestId, {
     include: { model: db.Groups, as: "group" },
@@ -350,8 +387,8 @@ async function createSupportHandler(req, res) {
       error: `Supporting user and requesting user must belong to the same group`,
     });
   }
-  if (req.body.content == null){
-    return res.status(400).json({ error: `Data has empty fields`});
+  if (req.body.content == null) {
+    return res.status(400).json({ error: `Data has empty fields` });
   }
   let support = new db.Supports({
     id_request: requestId,
@@ -578,8 +615,8 @@ async function updateRequestHandler(req, res) {
     }
     for (let key in req.body) {
       if (key == "is_deleted") continue;
-      if( req.body[key] == null){
-        return res.status(400).json({ error: `Data has empty fields`});
+      if (req.body[key] == null) {
+        return res.status(400).json({ error: `Data has empty fields` });
       }
       request[key] = req.body[key];
     }
@@ -624,7 +661,7 @@ async function updateRequestHandler(req, res) {
  *                  type: string
  *                  example: "Request ${id_request} does not exist"
  *      401:
- *        description: User is not the creator of the request
+ *        description: User is not the creator of the request and admin
  *        content:
  *          application/json:
  *            schema:
@@ -632,7 +669,7 @@ async function updateRequestHandler(req, res) {
  *              properties:
  *                error:
  *                  type: string
- *                  example: "User must be ${request.username}"
+ *                  example: "User must be ${request.username} or admin"
  *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
@@ -654,10 +691,13 @@ async function deleteRequestHandler(req, res) {
   let id_request = req.params.id_request;
   try {
     let request = await getRequest(id_request, res);
-    if (req.verifyResult.username != request.username) {
+    if (
+      req.verifyResult.username != request.username &&
+      req.verifyResult.is_admin == false
+    ) {
       return res
         .status(401)
-        .json({ error: `User must be ${request.username}` });
+        .json({ error: `User must be ${request.username} or admin` });
     }
     request.is_deleted = true;
     await request.save();
@@ -729,16 +769,16 @@ async function deleteRequestHandler(req, res) {
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function listRequestReactionsHandler(req, res){
+async function listRequestReactionsHandler(req, res) {
   try {
     await getRequest(req.params.id_request, res);
     let reactions = await db.Reactions.findAll({
       where: {
         id_request: req.params.id_request,
         object_type: 0,
-      }
+      },
     });
-    return res.status(200).json({ reactions});
+    return res.status(200).json({ reactions });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -808,7 +848,7 @@ async function listRequestReactionsHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function createReactionHandler(req, res){
+async function createReactionHandler(req, res) {
   try {
     await getRequest(req.params.id_request, res);
     let reaction = await db.Reactions.create({
@@ -836,51 +876,66 @@ async function createReactionHandler(req, res){
  *        require: true
  *        type: string
  *        example: 1
+ *      - name: page
+ *        in: query
+ *        require: true
+ *        type: string
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return reactions list for request
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              item:
- *                type: object
- *                properties:
- *                  id_comment:
- *                    type:int
- *                  id_request:
- *                    type:int
- *                  id_support:
- *                    type:int
- *                  username:
- *                    type: string
- *                  object_type:
- *                    type: int
- *                  content:
- *                    type:string
- *                  is_deleted:
- *                    type:boolean
- *                  date_created:
- *                    type:string
- *              example:
- *                - id_comment: 1
- *                  id_request: 1
- *                  id_support: null
- *                  username: seeding.user.1
- *                  object_type: 0
- *                  content: comment request
- *                  is_deleted: false
- *                  date_created: 2021-12-18T12:57:40.000Z
- *                - id_comment: 2
- *                  id_request: 1
- *                  id_support: null
- *                  username: seeding.user.3
- *                  object_type: 0
- *                  content: comment request
- *                  is_deleted: false
- *                  date_created: 2021-12-19T12:57:40.000Z
+ *              type: object
+ *              properties:
+ *                current_page:
+ *                  type: int
+ *                  example: 1
+ *                total_pages:
+ *                  type: int
+ *                  example: 1
+ *                total_comments:
+ *                  type: int
+ *                  example: 2
+ *                comments:
+ *                  type: object
+ *                  properties:
+ *                    id_comment:
+ *                      type:int
+ *                    id_request:
+ *                      type:int
+ *                    id_support:
+ *                      type:int
+ *                    username:
+ *                      type: string
+ *                    object_type:
+ *                      type: int
+ *                    content:
+ *                      type:string
+ *                    is_deleted:
+ *                      type:boolean
+ *                    date_created:
+ *                      type:string
+ *                  example:
+ *                    - id_comment: 1
+ *                      id_request: 1
+ *                      id_support: null
+ *                      username: seeding.user.1
+ *                      object_type: 0
+ *                      content: comment request
+ *                      is_deleted: false
+ *                      date_created: 2021-12-18T12:57:40.000Z
+ *                    - id_comment: 2
+ *                      id_request: 1
+ *                      id_support: null
+ *                      username: seeding.user.3
+ *                      object_type: 0
+ *                      content: comment request
+ *                      is_deleted: false
+ *                      date_created: 2021-12-19T12:57:40.000Z
  *      400:
- *        description: Request does not exist/ id_request is not integer
+ *        description: Request does not exist/ id_request is not integer/ page is not integer/ page is less than 0/ page is larger total page
  *        content:
  *          application/json:
  *            schema:
@@ -896,16 +951,46 @@ async function createReactionHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function listRequestCommentsHandler(req, res){
+async function listRequestCommentsHandler(req, res) {
   try {
     await getRequest(req.params.id_request, res);
+    const page = req.query.page;
+    if (page == null) {
+      let comments = await db.Comments.findAll({
+        where: {
+          id_request: req.params.id_request,
+          object_type: 0,
+        },
+        order: [["date_created", "desc"]],
+      });
+      return res.status(200).json({ comments });
+    }
+    total_comments = await db.Comments.count({
+      where: {
+        id_request: req.params.id_request,
+        object_type: 0,
+      },
+    });
+    const { limit, offset, totalPages } = await pagination(
+      total_comments,
+      page,
+      res
+    );
     let comments = await db.Comments.findAll({
       where: {
         id_request: req.params.id_request,
         object_type: 0,
-      }
+      },
+      order: [["date_created", "desc"]],
+      limit: limit,
+      offset: offset,
     });
-    return res.status(200).json({ comments});
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_comments: total_comments,
+      comments: comments,
+    });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
@@ -984,10 +1069,10 @@ async function listRequestCommentsHandler(req, res){
  *            schema:
  *              $ref: "#/components/schemas/Response Error"
  */
-async function createCommentHandler(req, res){
+async function createCommentHandler(req, res) {
   try {
     let content = req.body.content;
-    if (content == null){
+    if (content == null) {
       return res.status(400).json({ error: `Content is empty` });
     }
     await getRequest(req.params.id_request, res);

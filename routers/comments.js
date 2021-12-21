@@ -189,7 +189,7 @@ async function updateCommentHandler(req, res){
  * @swagger
  * /comments/{id_comment}:
  *  delete:
- *    summary: User deleted comment
+ *    summary: User/admin deleted comment
  *    tags:
  *      - comments
  *    security:
@@ -208,7 +208,7 @@ async function updateCommentHandler(req, res){
  *                  type: string
  *                  example: "Comment ${id_comment} does not exist"
  *      401:
- *        description: User is not the creator of the comment
+ *        description: User is not the creator of the comment and admin
  *        content:
  *          application/json:
  *            schema:
@@ -216,7 +216,7 @@ async function updateCommentHandler(req, res){
  *              properties:
  *                error:
  *                  type: string
- *                  example: "User must be ${request.username}"
+ *                  example: "User must be ${request.username} or admin"
  *      403:
  *        description: Failed to authorize request/ Access token is invalid
  *        content:
@@ -237,10 +237,10 @@ async function updateCommentHandler(req, res){
 async function deleteCommentHandler(req, res){
   try {
     let comment = await getComment(req.params.id_comment, res);
-    if (req.verifyResult.username != comment.username){
+    if (req.verifyResult.username != comment.username && req.verifyResult.is_admin == false){
       return res
         .status(401)
-        .json({ error: `User must be ${comment.username}` });
+        .json({ error: `User must be ${comment.username} or admin` });
     }
     comment.is_deleted = true;
     await comment.save();
