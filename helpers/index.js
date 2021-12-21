@@ -21,4 +21,35 @@ function authUserMiddleware(req, res, next) {
   }
   next();
 }
-module.exports = { getAuthToken, authUserMiddleware };
+function isValidWebUrl(string) {
+  let url;
+
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+
+  return url.protocol === "http:" || url.protocol === "https:";
+}
+
+function validateImagesParamMiddleware(req, res, next) {
+  if (req.body.images == null) req.body.images = [];
+  for (let image of req.body.images) {
+    if (typeof image != "object" || image.url == undefined) {
+      return res
+        .status(400)
+        .json({ error: `"images" field must contain object with key "url"` });
+    } else if (!isValidWebUrl(image.url))
+      return res
+        .status(400)
+        .json({ error: `"${image.url}" is not a valid web URL` });
+  }
+  next();
+}
+
+module.exports = {
+  getAuthToken,
+  authUserMiddleware,
+  validateImagesParamMiddleware,
+};

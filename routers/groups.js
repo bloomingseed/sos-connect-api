@@ -1,6 +1,9 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware } = require("../helpers");
+var {
+  authUserMiddleware,
+  validateImagesParamMiddleware,
+} = require("../helpers");
 var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
@@ -599,9 +602,9 @@ async function listGroupUsersHandler(req, res) {
   await getGroup(groupId, res);
   try {
     let groups = await db.Members.findAll({
-      include: { 
+      include: {
         model: db.Profiles,
-        as: 'profile',
+        as: "profile",
       },
       where: {
         id_group: groupId,
@@ -853,6 +856,13 @@ async function createGroupHandler(req, res) {
  *                    type: string
  *                  is_approved:
  *                    type: boolean
+ *                  images:
+ *                    type: array
+ *                    item:
+ *                      type: object
+ *                      properties:
+ *                        url:
+ *                          type: string
  *              example:
  *                - id_request: 2
  *                  id_group: 1
@@ -861,6 +871,9 @@ async function createGroupHandler(req, res) {
  *                  is_deleted: false
  *                  date_created: 2021-10-29T13:36:48.562Z
  *                  is_approved: false
+ *                  images:
+ *                    - url: "https://viraland.vn/wp-content/uploads/2020/04/Thue-phong-tro-da-nang-theo-nhu-cau.jpg"
+ *                    - url: "http://baoninhbinh.org.vn/DATA/ARTICLES/2020/10/19/ho-tro-nguoi-dan-vuot-qua-kho-khan-va-khac-phuc-hau-qua-11543.jpg"
  *                - id_request: 5
  *                  id_group: 1
  *                  username: seeding.user.9
@@ -868,6 +881,7 @@ async function createGroupHandler(req, res) {
  *                  is_deleted: false
  *                  date_created: 2021-10-29T13:36:48.562Z
  *                  is_approved: false
+ *                  images: []
  *      500:
  *        description: Account failed to register due to server error
  *        content:
@@ -891,6 +905,11 @@ async function getListGroupRequestHandler(req, res) {
         is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
+      include: {
+        model: db.Images,
+        as: "images",
+        attributes: ["url"],
+      },
     });
     return res.status(200).json(requests);
   } catch (error) {
@@ -923,8 +942,16 @@ async function getListGroupRequestHandler(req, res) {
  *            properties:
  *              content:
  *                type: string
+ *              images:
+ *                type: array
+ *                item:
+ *                  type: object
+ *                  properties:
+ *                    url:
+ *                      type: string
  *            example:
  *              content: cần hổ trợ lương thực, thực phẩm
+ *              images: []
  *    responses:
  *      201:
  *        description: Created
@@ -947,6 +974,13 @@ async function getListGroupRequestHandler(req, res) {
  *                  type: string
  *                is_approved:
  *                  type: boolean
+ *                images:
+ *                  type: array
+ *                  item:
+ *                    type: object
+ *                    properties:
+ *                      url:
+ *                        type: string
  *              example:
  *                id_request: 1
  *                id_group: 2
@@ -955,8 +989,9 @@ async function getListGroupRequestHandler(req, res) {
  *                is_deleted: true
  *                date_created: 2021-10-29T13:36:48.562Z
  *                is_approved: true
+ *                images: []
  *      400:
- *        description: User is not member of group/ Content is null
+ *        description: User is not member of group/ Content is null/ "images" field does not contain objects with key "url" / image url not valid
  *        content:
  *          application/json:
  *            schema:
@@ -1009,6 +1044,20 @@ async function createGroupRequestHandler(req, res) {
       request[key] = req.body[key];
     }
     await request.save();
+    let tasks = [];
+    for (let image of request.images) {
+      tasks.push(
+        db.Images.create({
+          id_request: request.id_request,
+          object_type: 0,
+          url: image.url,
+        })
+      );
+    }
+    await Promise.all(tasks);
+    request.dataValues.images = await request.getImages({
+      attributes: ["url"],
+    });
     return res.status(201).json(request);
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -1032,7 +1081,11 @@ groupsRouter.use("/:id_group/users", groupUsersRouter); // uses nested router
 groupRequestRouter
   .route("/")
   .get(getListGroupRequestHandler)
-  .post(authUserMiddleware, createGroupRequestHandler);
+  .post(
+    authUserMiddleware,
+    validateImagesParamMiddleware,
+    createGroupRequestHandler
+  );
 groupsRouter.use("/:id_group/requests", groupRequestRouter);
 
 module.exports = { router: groupsRouter, name: "groups" };

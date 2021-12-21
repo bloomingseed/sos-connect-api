@@ -1,6 +1,9 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware } = require("../helpers");
+var {
+  authUserMiddleware,
+  validateImagesParamMiddleware,
+} = require("../helpers");
 
 var supportsRouter = express.Router();
 var supportReactionsRouter = express.Router({ mergeParams: true });
@@ -125,6 +128,9 @@ async function getSupportHandler(req, res) {
         object_type: 1,
       },
     });
+    support.dataValues.images = await support.getImages({
+      attributes: ["url"],
+    });
     return res.status(200).json(support);
   } catch (e) {
     return res.status(500).json({ error: e });
@@ -212,6 +218,19 @@ async function updateSupportHandler(req, res) {
   support.content = req.body.content || support.content; // updates support info
   try {
     await support.save();
+    let tasks = [];
+    for (let image of req.body.images) {
+      tasks.push(
+        db.Images.create({
+          id_support: support.id_support,
+          object_type: 1,
+          url: image.url,
+        })
+      );
+    }
+    support.images = req.body.images;
+    await Promise.all(tasks);
+
     return res.sendStatus(200);
   } catch (e) {
     return res.status(500).json({ error: e });
@@ -632,7 +651,12 @@ async function createCommentHandler(req, res){
 supportsRouter
   .route("/:id_support")
   .get(getSupportHandler)
-  .put(authUserMiddleware, isUserOwnsSupportMiddleware, updateSupportHandler)
+  .put(
+    authUserMiddleware,
+    isUserOwnsSupportMiddleware,
+    validateImagesParamMiddleware,
+    updateSupportHandler
+  )
   .delete(
     authUserMiddleware,
     isUserOwnsSupportMiddleware,
