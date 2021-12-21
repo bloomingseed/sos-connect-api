@@ -1,6 +1,6 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware } = require("../helpers");
+var { authUserMiddleware, pagination } = require("../helpers");
 
 var supportsRouter = express.Router();
 var supportReactionsRouter = express.Router({ mergeParams: true });
@@ -474,51 +474,66 @@ async function createReactionHandler(req, res){
  *        require: true
  *        type: string
  *        example: 1
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return comments list for support
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              item:
- *                type: object
- *                properties:
- *                  id_comment:
- *                    type:int
- *                  id_request:
- *                    type:int
- *                  id_support:
- *                    type:int
- *                  username:
- *                    type: string
- *                  object_type:
- *                    type: int
- *                  content:
- *                    type:string
- *                  is_deleted:
- *                    type:boolean
- *                  date_created:
- *                    type:string
- *              example:
- *                - id_comment: 4
- *                  id_request: null
- *                  id_support: 1
- *                  username: seeding.user.1
- *                  object_type: 1
- *                  content: comment support
- *                  is_deleted: false
- *                  date_created: 2021-12-18T12:57:40.000Z
- *                - id_comment: 6
- *                  id_request: null
- *                  id_support: 1
- *                  username: seeding.user.3
- *                  object_type: 1
- *                  content: comment support
- *                  is_deleted: false
- *                  date_created: 2021-12-19T12:57:40.000Z
+ *              type: object
+ *              properties:
+ *                current_page:
+ *                  type: int
+ *                  example: 1
+ *                total_pages:
+ *                  type: int
+ *                  example: 1
+ *                total_comments:
+ *                  type: int
+ *                  example: 2
+ *                comments:
+ *                  type: object
+ *                  properties:
+ *                    id_comment:
+ *                      type:int
+ *                    id_request:
+ *                      type:int
+ *                    id_support:
+ *                      type:int
+ *                    username:
+ *                      type: string
+ *                    object_type:
+ *                      type: int
+ *                    content:
+ *                      type:string
+ *                    is_deleted:
+ *                      type:boolean
+ *                    date_created:
+ *                      type:string
+ *                  example:
+ *                    - id_comment: 4
+ *                      id_request: null
+ *                      id_support: 1
+ *                      username: seeding.user.1
+ *                      object_type: 1
+ *                      content: comment support
+ *                      is_deleted: false
+ *                      date_created: 2021-12-18T12:57:40.000Z
+ *                    - id_comment: 6
+ *                      id_request: null
+ *                      id_support: 1
+ *                      username: seeding.user.3
+ *                      object_type: 1
+ *                      content: comment support
+ *                      is_deleted: false
+ *                      date_created: 2021-12-19T12:57:40.000Z
  *      400:
- *        description: Request does not exist/ id_support is not integer
+ *        description: Request does not exist/ id_support is not integer/ page is not integer/ page is less than 0/ page is larger total page
  *        content:
  *          application/json:
  *            schema:
@@ -537,14 +552,39 @@ async function createReactionHandler(req, res){
 async function listSupportCommentsHandler(req, res){
   try {
     await getSupport(req.params.id_support, res);
-    let comment = await db.Comments.findAll({
+    const page = req.query.page;
+    if (page == null) {
+      let comment = await db.Comments.findAll({
+        where: {
+          id_support: req.params.id_support,
+          object_type: 1,
+        },
+        order: [['date_created', 'desc']],
+      });
+      return res.status(200).json({ comment});
+    }
+    total_comments = await db.Comments.count({
+      where: {
+        id_support: req.params.id_support,
+        object_type: 1,
+      },
+    });
+    const { limit, offset, totalPages } = await pagination(total_comments, page, res);
+    let comments = await db.Comments.findAll({
       where: {
         id_support: req.params.id_support,
         object_type: 1,
       },
       order: [['date_created', 'desc']],
+      limit: limit,
+      offset: offset,
     });
-    return res.status(200).json({ comment});
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_comments: total_comments,
+      comments: comments
+    });
   } catch (error) {
     return res.status(500).json({ error: error });
   }

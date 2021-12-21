@@ -1,6 +1,6 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware } = require("../helpers");
+var { authUserMiddleware, pagination } = require("../helpers");
 var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
@@ -22,6 +22,12 @@ var profileRequestsRouter = express.Router({ mergeParams: true});
  *    summary: admin get list profiles
  *    tags:
  *      - profiles
+ *    parameters:
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 3
  *    security:
  *      - bearerAuth: []
  *    responses:
@@ -30,56 +36,78 @@ var profileRequestsRouter = express.Router({ mergeParams: true});
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              item:
- *                type: object
- *                properties:
- *                  username:
- *                    type:string
- *                  last_name:
- *                    type: string
- *                  first_name:
- *                    type: string
- *                  gender:
- *                    type: boolean
- *                  avatar_url:
- *                    type: string
- *                  date_of_birth:
- *                    type: string
- *                  country:
- *                    type: string
- *                  province:
- *                    type: string
- *                  district:
- *                    type: string
- *                  ward:
- *                    type: string
- *                  street:
- *                    type: string
- *                  email:
- *                    type: string
- *                  phone_number:
- *                    type: string
- *                  is_deactivated:
- *                    type: boolean
- *                  is_deleted:
- *                    type: boolean
- *              example:
- *                - username: seeding.user.1
- *                  last_name: Seeding
- *                  first_name: User 1
- *                  gender: true
- *                  avatar_url: null
- *                  date_of_birth: 2000-01-01
- *                  country: Việt Nam
- *                  province: Đà Nẵng
- *                  district: Liên Chiểu
- *                  ward: Hòa Khánh Bắc
- *                  street: 1 Tôn Đức Thắng
- *                  email: "seeding1@mail"
- *                  phone_number: 0123456789
- *                  is_deactivated: false
- *                  is_deleted: false
+ *              type: object
+ *              properties:
+ *                current_page:
+ *                  type: int
+ *                  example: 3
+ *                total_pages:
+ *                  type: int
+ *                  example: 3
+ *                total_profies:
+ *                  type: int
+ *                  example: 21
+ *                profiles:
+ *                  type: array
+ *                  item:
+ *                    type: object
+ *                    properties:
+ *                      username:
+ *                        type:string
+ *                      last_name:
+ *                        type: string
+ *                      first_name:
+ *                        type: string
+ *                      gender:
+ *                        type: boolean
+ *                      avatar_url:
+ *                        type: string
+ *                      date_of_birth:
+ *                        type: string
+ *                      country:
+ *                        type: string
+ *                      province:
+ *                        type: string
+ *                      district:
+ *                        type: string
+ *                      ward:
+ *                        type: string
+ *                      street:
+ *                        type: string
+ *                      email:
+ *                        type: string
+ *                      phone_number:
+ *                        type: string
+ *                      is_deactivated:
+ *                        type: boolean
+ *                      is_deleted:
+ *                        type: boolean
+ *                  example:
+ *                    - username: seeding.user.1
+ *                      last_name: Seeding
+ *                      first_name: User 1
+ *                      gender: true
+ *                      avatar_url: null
+ *                      date_of_birth: 2000-01-01
+ *                      country: Việt Nam
+ *                      province: Đà Nẵng
+ *                      district: Liên Chiểu
+ *                      ward: Hòa Khánh Bắc
+ *                      street: 1 Tôn Đức Thắng
+ *                      email: "seeding1@mail"
+ *                      phone_number: 0123456789
+ *                      is_deactivated: false
+ *                      is_deleted: false
+ *      400:
+ *        description: page is not integer/ page is less than 0/ page is larger total page
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Page must be an integer"
  *      401:
  *        description: User is not admin
  *        content:
@@ -112,8 +140,23 @@ async function listProfilesHandler(req, res){
     return res.status(401).json({ error: `User must be admin`})
   }
   try {
-    let profiles = await db.Profiles.findAll();
-    return res.status(200).json(profiles);
+    const page = req.query.page;
+    if (page == null) {
+      let profiles = await db.Profiles.findAll();
+      return res.status(200).json(profiles);
+    }
+    total_profies = await db.Profiles.count();
+    const { limit, offset, totalPages } = await pagination(total_profies, page, res);
+    let profiles = await db.Profiles.findAll({
+      limit: limit,
+      offset: offset,
+    });
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_profies: total_profies,
+      profiles: profiles
+    });
   } catch (error) {
     return res.status(500).json({ error: error});
   }
@@ -554,6 +597,11 @@ async function deleteUserProfileHandler(req, res){
  *        schema:
  *          type: string
  *          example: seeding.user.1
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return list requests
@@ -562,37 +610,49 @@ async function deleteUserProfileHandler(req, res){
  *            schema:
  *              type: object
  *              properties:
- *                  id_request:
- *                    type:int
- *                  id_group:
- *                    type:int
- *                  username:
- *                    type:string
- *                  content:
- *                    type: string
- *                  is_deleted:
- *                    type: boolean
- *                  date_created:
- *                    type: string
- *                  is_approved:
- *                    type: boolean
- *              example:
- *                - id_request: 1
- *                  id_group: 2
- *                  username: seeding.user.1
- *                  content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. fishes\n2. pumpkin\n3. eggs\n4. rice
- *                  is_deleted: false
- *                  date_created: 2021-10-29T13:36:48.562Z
- *                  is_approved: false
- *                - id_request: 11
- *                  id_group: 2
- *                  username: seeding.user.1
- *                  content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. cookies\n2. fishes\n3. instant noodles\n4. pumpkin\n5. apples
- *                  is_deleted: false
- *                  date_created: 2021-10-29T13:36:48.562Z
- *                  is_approved: false
+ *                current_page:
+ *                  type: int
+ *                  example: 1
+ *                total_pages:
+ *                  type: int
+ *                  example: 1
+ *                total_requests:
+ *                  type: int
+ *                  example: 2
+ *                requests:
+ *                  type: object
+ *                  properties:
+ *                    id_request:
+ *                      type:int
+ *                    id_group:
+ *                      type:int
+ *                    username:
+ *                      type:string
+ *                    content:
+ *                      type: string
+ *                    is_deleted:
+ *                      type: boolean
+ *                    date_created:
+ *                      type: string
+ *                    is_approved:
+ *                      type: boolean
+ *                  example:
+ *                    - id_request: 1
+ *                      id_group: 2
+ *                      username: seeding.user.1
+ *                      content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. fishes\n2. pumpkin\n3. eggs\n4. rice
+ *                      is_deleted: false
+ *                      date_created: 2021-10-29T13:36:48.562Z
+ *                      is_approved: false
+ *                    - id_request: 11
+ *                      id_group: 2
+ *                      username: seeding.user.1
+ *                      content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. cookies\n2. fishes\n3. instant noodles\n4. pumpkin\n5. apples
+ *                      is_deleted: false
+ *                      date_created: 2021-10-29T13:36:48.562Z
+ *                      is_approved: false
  *      400:
- *        description: User does not exist
+ *        description: User does not exist/ page is not integer/ page is less than 0/ page is larger total page
  *        content:
  *          application/json:
  *            schema:
@@ -610,16 +670,31 @@ async function deleteUserProfileHandler(req, res){
  */
 async function getListProfileRequestsHandler(req, res){
   let username = req.params.username;
+  const page = req.query.page;
   try {
     await getUserProfile(username, res);
+    if (page == null) {
+      let requests = await db.Requests.findAll({
+        where: { 
+          username: username,
+          is_deleted: false,
+        },
+        order: [['date_created', 'desc']],
+      });
+      return res.status(200).json(requests);
+    }
+    total_requests = await db.Requests.count();
+    const { limit, offset, totalPages } = await pagination(total_requests, page, res);
     let requests = await db.Requests.findAll({
-      where: { 
-        username: username,
-        is_deleted: false,
-      },
-      order: [['date_created', 'desc']],
+      limit: limit,
+      offset: offset,
     });
-    return res.status(200).json(requests);
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_requests: total_requests,
+      requests: requests
+    });
   } catch (error) {
     return res.status(500).json({ error: error});
   }

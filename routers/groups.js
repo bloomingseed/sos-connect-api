@@ -1,6 +1,6 @@
 var express = require("express");
 var db = require("../models");
-var { authUserMiddleware } = require("../helpers");
+var { authUserMiddleware, pagination } = require("../helpers");
 var Op = require("sequelize").Op;
 
 const DUP_KEY_ERRCODE = "23505";
@@ -475,105 +475,120 @@ async function userJoinsGroupHandler(req, res) {
  *        require: true
  *        type: string
  *        example: asc
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: int
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return group's user
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              item:
- *                type: object
- *                properties:
- *                  username:
- *                    type:string
- *                  id_group:
- *                    type:int
- *                  as_role:
- *                    type: boolean
- *                  is_admin_invited:
- *                    type: boolean
- *                  date_created:
- *                    type: string
- *                  profile:
- *                    type: object
- *                    properties:
- *                      username:
- *                        type: string
- *                      last_name:
- *                        type: string
- *                      first_name:
- *                        type: string
- *                      gender:
- *                        type: boolean
- *                      avatar_url:
- *                        type: string
- *                      date_of_birth:
- *                        type: string
- *                      country:
- *                        type: string
- *                      province:
- *                        type: string
- *                      district:
- *                        type: string
- *                      ward:
- *                        type: string
- *                      street:
- *                        type: string
- *                      email:
- *                        type: string
- *                      phone_number:
- *                        type: string
- *                      is_deactivated:
- *                        type: boolean
- *                      is_deleted:
- *                        type: boolean
- *              example:
- *                - username: seeding.user.3
- *                  id_group: 1
- *                  as_role: false
- *                  is_admin_invited: false
- *                  date_created: 2021-10-29T13:36:30.567Z
- *                  profile:
- *                    username: seeding.user.3
- *                    last_name: Nguyễn Văn
- *                    first_name: Cường
- *                    gender: true
- *                    avatar_url: http://api.sos-connect.asia/uploads/seeding.user.3.png
- *                    date_of_birth: 2000-07-23
- *                    country: Việt Nam
- *                    province: Đà Nẵng
- *                    district: Liên Chiểu
- *                    ward: Hòa Khánh Bắc
- *                    street: 1 Ngô Thì Nhậm
- *                    email: "nvc@mail"
- *                    phone_number: 0132456789
- *                    is_deactivated: false
- *                    is_deleted: false
- *                - username: seeding.user.6
- *                  id_group: 1
- *                  as_role: true
- *                  is_admin_invited: false
- *                  date_created: 2021-10-29T13:36:30.567Z
- *                  profile:
- *                    username: seeding.user.6
- *                    last_name: Nguyễn Văn
- *                    first_name: Cường
- *                    gender: true
- *                    avatar_url: http://api.sos-connect.asia/uploads/seeding.user.6.png
- *                    date_of_birth: 2000-07-23
- *                    country: Việt Nam
- *                    province: Đà Nẵng
- *                    district: Liên Chiểu
- *                    ward: Hòa Khánh Bắc
- *                    street: 1 Ngô Thì Nhậm
- *                    email: "nvc@mail"
- *                    phone_number: 0132456789
- *                    is_deactivated: false
- *                    is_deleted: false
+ *              type: object
+ *              properties:
+ *                current_page:
+ *                  type: int
+ *                  example: 1
+ *                total_pages:
+ *                  type: int
+ *                  example: 1
+ *                total_members:
+ *                  type: int
+ *                  example: 2
+ *                members:
+ *                  type: object
+ *                  properties:
+ *                    username:
+ *                      type: string
+ *                    id_group:
+ *                      type: int
+ *                    as_role:
+ *                      type: boolean
+ *                    is_admin_invited:
+ *                      type: boolean
+ *                    date_created:
+ *                      type: string
+ *                    profile:
+ *                      type: object
+ *                      properties:
+ *                        username:
+ *                          type: string
+ *                        last_name:
+ *                          type: string
+ *                        first_name:
+ *                          type: string
+ *                        gender:
+ *                          type: boolean
+ *                        avatar_url:
+ *                          type: string
+ *                        date_of_birth:
+ *                          type: string
+ *                        country:
+ *                          type: string
+ *                        province:
+ *                          type: string
+ *                        district:
+ *                          type: string
+ *                        ward:
+ *                          type: string
+ *                        street:
+ *                          type: string
+ *                        email:
+ *                          type: string
+ *                        phone_number:
+ *                          type: string
+ *                        is_deactivated:
+ *                          type: boolean
+ *                        is_deleted:
+ *                          type: boolean
+ *                  example:
+ *                    - username: seeding.user.3
+ *                      id_group: 1
+ *                      as_role: false
+ *                      is_admin_invited: false
+ *                      date_created: 2021-10-29T13:36:30.567Z
+ *                      profile:
+ *                        username: seeding.user.3
+ *                        last_name: Nguyễn Văn
+ *                        first_name: Cường
+ *                        gender: true
+ *                        avatar_url: http://api.sos-connect.asia/uploads/seeding.user.3.png
+ *                        date_of_birth: 2000-07-23
+ *                        country: Việt Nam
+ *                        province: Đà Nẵng
+ *                        district: Liên Chiểu
+ *                        ward: Hòa Khánh Bắc
+ *                        street: 1 Ngô Thì Nhậm
+ *                        email: "nvc@mail"
+ *                        phone_number: 0132456789
+ *                        is_deactivated: false
+ *                        is_deleted: false
+ *                    - username: seeding.user.6
+ *                      id_group: 1
+ *                      as_role: true
+ *                      is_admin_invited: false
+ *                      date_created: 2021-10-29T13:36:30.567Z
+ *                      profile:
+ *                        username: seeding.user.6
+ *                        last_name: Nguyễn Văn
+ *                        first_name: Cường
+ *                        gender: true
+ *                        avatar_url: http://api.sos-connect.asia/uploads/seeding.user.6.png
+ *                        date_of_birth: 2000-07-23
+ *                        country: Việt Nam
+ *                        province: Đà Nẵng
+ *                        district: Liên Chiểu
+ *                        ward: Hòa Khánh Bắc
+ *                        street: 1 Ngô Thì Nhậm
+ *                        email: "nvc@mail"
+ *                        phone_number: 0132456789
+ *                        is_deactivated: false
+ *                        is_deleted: false
  *
  *      400:
- *        description: Group ID is not integer
+ *        description: Group ID is not integer/ page is not integer/ page is less than 0/ page is larger total page
  *        content:
  *          application/json:
  *            schema:
@@ -597,8 +612,30 @@ async function listGroupUsersHandler(req, res) {
   };
   let groupId = req.params.id_group;
   await getGroup(groupId, res);
+  const page = req.query.page;
   try {
-    let groups = await db.Members.findAll({
+    if (page == null){
+      let groups = await db.Members.findAll({
+        include: { 
+          model: db.Profiles,
+          as: 'profile',
+        },
+        where: {
+          id_group: groupId,
+          username: { [Op.like]: `%${searchParams.search}%` },
+        },
+        order: [[searchParams.field, searchParams.sort]],
+      });
+      return res.status(200).json(groups);
+    }
+    total_members = await db.Members.count({
+      where: {
+        id_group: groupId,
+        username: { [Op.like]: `%${searchParams.search}%` },
+      },
+    });
+    const { limit, offset, totalPages } = await pagination(total_members, page, res);
+    let members = await db.Members.findAll({
       include: { 
         model: db.Profiles,
         as: 'profile',
@@ -607,9 +644,16 @@ async function listGroupUsersHandler(req, res) {
         id_group: groupId,
         username: { [Op.like]: `%${searchParams.search}%` },
       },
+      limit: limit,
+      offset: offset,
       order: [[searchParams.field, searchParams.sort]],
     });
-    return res.status(200).json(groups);
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_members: total_members,
+      members: members
+    });
   } catch (e) {
     return res.status(500).json({ error: e.parent });
   }
@@ -638,37 +682,62 @@ async function listGroupUsersHandler(req, res) {
  *        require: true
  *        type: string
  *        example: asc
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return list groups
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              item:
- *                type: object
- *                properties:
- *                  id_group:
- *                    type:int
- *                  description:
- *                    type: string
- *                  name:
- *                    type: string
- *                  is_deleted:
- *                    type: boolean
- *                  date_created:
- *                    type: string
- *              example:
- *                - id_group: 1
- *                  description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
- *                  name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
- *                  is_deleted: true
- *                  date_created: 2021-10-29T13:36:14.053Z
- *                - id_group: 2
- *                  description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Hải Châu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group.
- *                  name: Hỗ trợ COVID-19 quận Hải Châu, Đà Nẵng
- *                  is_deleted: false
- *                  date_created: 2021-10-29T13:36:14.053Z
+ *              type: object
+ *              properties:
+ *                current_page:
+ *                  type: int
+ *                  example: 1
+ *                total_pages:
+ *                  type: int
+ *                  example: 1
+ *                total_groups:
+ *                  type: int
+ *                  example: 2
+ *                groups:
+ *                  type: object
+ *                  properties:
+ *                    id_group:
+ *                      type:int
+ *                    description:
+ *                      type: string
+ *                    name:
+ *                      type: string
+ *                    is_deleted:
+ *                      type: boolean
+ *                    date_created:
+ *                      type: string
+ *                  example:
+ *                    - id_group: 1
+ *                      description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Liên Chiểu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group
+ *                      name: Hỗ trợ COVID-19 quận Liên Chiểu, Đà Nẵng
+ *                      is_deleted: true
+ *                      date_created: 2021-10-29T13:36:14.053Z
+ *                    - id_group: 2
+ *                      description: Nhóm hỗ trợ người dân chịu ảnh hưởng bởi COVID-19 khu vực quận Hải Châu, Đà Nẵng.\nNgười gặp khó khăn có thể gửi yêu cầu hỗ trợ, người có khả năng có thể gửi hỗ trợ cho các yêu cầu trong group.
+ *                      name: Hỗ trợ COVID-19 quận Hải Châu, Đà Nẵng
+ *                      is_deleted: false
+ *                      date_created: 2021-10-29T13:36:14.053Z
+ *      400:
+ *        description: page is not integer/ page is less than 0/ page is larger total page
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Page must be an integer"
  *      500:
  *        description: Account failed to register due to server error
  *        content:
@@ -682,16 +751,40 @@ async function listGroupsHandler(req, res) {
     field: req.query.field || "date_created",
     sort: req.query.sort || "desc",
   };
-  console.log(searchParams);
+  const page = req.query.page;
   try {
+    if (page == null) {
+      let groups = await db.Groups.findAll({
+        where: {
+          name: { [Op.like]: `%${searchParams.search}%` },
+          is_deleted: false,
+        },
+        order: [[searchParams.field, searchParams.sort]],
+      });
+      return res.status(200).json(groups);
+    }
+    total_groups = await db.Groups.count({
+      where: {
+        name: { [Op.like]: `%${searchParams.search}%` },
+        is_deleted: false,
+      },
+    });
+    const { limit, offset, totalPages } = await pagination(total_groups, page, res);
     let groups = await db.Groups.findAll({
       where: {
         name: { [Op.like]: `%${searchParams.search}%` },
         is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
+      limit: limit,
+      offset: offset,
     });
-    return res.status(200).json(groups);
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_groups: total_groups,
+      groups: groups
+    });
   } catch (e) {
     return res.status(500).json({ error: e.parent });
   }
@@ -829,45 +922,70 @@ async function createGroupHandler(req, res) {
  *        require: true
  *        type: string
  *        example: asc
+ *      - name: page
+ *        in: path
+ *        require: true
+ *        type: string
+ *        example: 1
  *    responses:
  *      200:
  *        description: Return group's requests
  *        content:
  *          application/json:
  *            schema:
- *              type: array
- *              item:
- *                type: object
- *                properties:
- *                  id_request:
- *                    type:int
- *                  id_group:
- *                    type:int
- *                  username:
- *                    type:string
- *                  content:
- *                    type: string
- *                  is_deleted:
- *                    type: boolean
- *                  date_created:
- *                    type: string
- *                  is_approved:
- *                    type: boolean
- *              example:
- *                - id_request: 2
- *                  id_group: 1
- *                  username: seeding.user.3
- *                  content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. fishes\n2. pumpkin\n3. eggs\n4. rice
- *                  is_deleted: false
- *                  date_created: 2021-10-29T13:36:48.562Z
- *                  is_approved: false
- *                - id_request: 5
- *                  id_group: 1
- *                  username: seeding.user.9
- *                  content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. cookies\n2. fishes\n3. instant noodles\n4. pumpkin\n5. apples
- *                  is_deleted: false
- *                  date_created: 2021-10-29T13:36:48.562Z
- *                  is_approved: false
+ *              type: object
+ *              properties:
+ *                current_page:
+ *                  type: int
+ *                  example: 1
+ *                total_pages:
+ *                  type: int
+ *                  example: 1
+ *                total_profies:
+ *                  type: int
+ *                  example: 2
+ *                requests:
+ *                  type: object
+ *                  properties:
+ *                    id_request:
+ *                      type:int
+ *                    id_group:
+ *                      type:int
+ *                    username:
+ *                      type:string
+ *                    content:
+ *                      type: string
+ *                    is_deleted:
+ *                      type: boolean
+ *                    date_created:
+ *                      type: string
+ *                    is_approved:
+ *                      type: boolean
+ *                  example:
+ *                    - id_request: 2
+ *                      id_group: 1
+ *                      username: seeding.user.3
+ *                      content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. fishes\n2. pumpkin\n3. eggs\n4. rice
+ *                      is_deleted: false
+ *                      date_created: 2021-10-29T13:36:48.562Z
+ *                      is_approved: false
+ *                    - id_request: 5
+ *                      id_group: 1
+ *                      username: seeding.user.9
+ *                      content: COVID-19 impacts our lives heavily. We are in needed of these items:\n        1. cookies\n2. fishes\n3. instant noodles\n4. pumpkin\n5. apples
+ *                      is_deleted: false
+ *                      date_created: 2021-10-29T13:36:48.562Z
+ *                      is_approved: false
+ *      400:
+ *        description: page is not integer/ page is less than 0/ page is larger total page
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                error:
+ *                  type: string
+ *                  example: "Page must be an integer"
  *      500:
  *        description: Account failed to register due to server error
  *        content:
@@ -884,15 +1002,42 @@ async function getListGroupRequestHandler(req, res) {
       field: req.query.field || "date_created",
       sort: req.query.sort || "desc",
     };
-    let requests = await db.Requests.findAll({
+    const page = req.query.page;
+    if (page == null) {
+      let requests = await db.Requests.findAll({
+        where: {
+          is_deleted: false,
+          id_group: groupId,
+          content: { [Op.like]: `%${searchParams.search}%` },
+        },
+        order: [[searchParams.field, searchParams.sort]],
+      });
+      return res.status(200).json(requests);
+    }
+    total_requests = await db.Requests.count({
       where: {
+        is_deleted: false,
         id_group: groupId,
         content: { [Op.like]: `%${searchParams.search}%` },
+      },
+    });
+    const { limit, offset, totalPages } = await pagination(total_requests, page, res);
+    let requests = await db.Requests.findAll({
+      where: {
         is_deleted: false,
+        id_group: groupId,
+        content: { [Op.like]: `%${searchParams.search}%` },
       },
       order: [[searchParams.field, searchParams.sort]],
+      limit: limit,
+      offset: offset,
     });
-    return res.status(200).json(requests);
+    return res.status(200).json({
+      current_page: page,
+      total_pages: totalPages,
+      total_requests: total_requests,
+      requests: requests
+    });
   } catch (error) {
     return res.status(500).json({ error: error });
   }
