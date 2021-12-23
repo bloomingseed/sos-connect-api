@@ -1024,6 +1024,17 @@ async function getListGroupRequestHandler(req, res) {
           content: { [Op.like]: `%${searchParams.search}%` },
         },
         order: [[searchParams.field, searchParams.sort]],
+        include: [
+          {
+          model: db.Images,
+          as: "images",
+          attributes: ["url"],
+          },
+          {
+            model: db.Profiles,
+            as: 'user',
+          },
+        ],
       });
       return res.status(200).json(requests);
     }
@@ -1046,11 +1057,17 @@ async function getListGroupRequestHandler(req, res) {
         content: { [Op.like]: `%${searchParams.search}%` },
       },
       order: [[searchParams.field, searchParams.sort]],
-      include: {
+      include: [
+        {
         model: db.Images,
         as: "images",
         attributes: ["url"],
-      },
+        },
+        {
+          model: db.Profiles,
+          as: 'user',
+        },
+      ],
       limit: limit,
       offset: offset,
     });

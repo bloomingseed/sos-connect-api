@@ -24,7 +24,12 @@ async function getRequest(id_request, res) {
   if (isNaN(parseInt(id_request))) {
     return res.status(400).json({ error: `id_request must be an integer` });
   }
-  let request = await db.Requests.findByPk(id_request);
+  let request = await db.Requests.findByPk(id_request, {
+    include: {
+      model: db.Profiles,
+      as: 'user',
+    },
+  });
   if (request == null) {
     return res
       .status(400)
@@ -216,6 +221,17 @@ async function listRequestSupportsHandler(req, res) {
           is_deleted: false,
         },
         order: [[searchParams.field, searchParams.sort]],
+        include: [
+          {
+          model: db.Images,
+          as: "images",
+          attributes: ["url"],
+          },
+          {
+            model: db.Profiles,
+            as: 'user',
+          },
+        ],
       });
       return res.status(200).json(supports);
     }
@@ -238,11 +254,17 @@ async function listRequestSupportsHandler(req, res) {
         is_deleted: false,
       },
       order: [[searchParams.field, searchParams.sort]],
-      include: {
+      include: [
+        {
         model: db.Images,
         as: "images",
         attributes: ["url"],
-      },
+        },
+        {
+          model: db.Profiles,
+          as: 'user',
+        },
+      ],
       limit: limit,
       offset: offset,
     });
@@ -777,6 +799,10 @@ async function listRequestReactionsHandler(req, res) {
         id_request: req.params.id_request,
         object_type: 0,
       },
+      include: {
+        model: db.Profiles,
+        as: 'user',
+      }
     });
     return res.status(200).json({ reactions });
   } catch (error) {
@@ -962,6 +988,10 @@ async function listRequestCommentsHandler(req, res) {
           object_type: 0,
         },
         order: [["date_created", "desc"]],
+        include: {
+          model: db.Profiles,
+          as: 'user',
+        }
       });
       return res.status(200).json({ comments });
     }
@@ -984,6 +1014,10 @@ async function listRequestCommentsHandler(req, res) {
       order: [["date_created", "desc"]],
       limit: limit,
       offset: offset,
+      include: {
+        model: db.Profiles,
+        as: 'user',
+      }
     });
     return res.status(200).json({
       current_page: page,

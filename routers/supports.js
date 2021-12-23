@@ -25,7 +25,10 @@ async function isUserOwnsSupportMiddleware(req, res, next) {
     return res.status(400).json({ error: `id_support must be an integer` });
   }
   let support = await db.Supports.findByPk(supportId, {
-    include: { model: db.Requests, as: "request" },
+    include: [
+      { model: db.Requests, as: "request" },
+      { model: db.Profiles, as: 'user'},
+    ],
   });
   if (support == null) {
     return res
@@ -111,7 +114,12 @@ async function getSupportHandler(req, res) {
     return res.status(400).json({ error: `id_support must be an integer` });
   }
   try {
-    let support = await db.Supports.findByPk(supportId);
+    let support = await db.Supports.findByPk(supportId, {
+      include: {
+        model: db.Profiles,
+        as: 'user',
+      }
+    });
     if (support == null) {
       return res
         .status(400)
@@ -395,6 +403,10 @@ async function listSupportReactionsHandler(req, res) {
         id_support: req.params.id_support,
         object_type: 1,
       },
+      include: {
+        model: db.Profiles,
+        as: 'user',
+      },
     });
     return res.status(200).json({ reactions });
   } catch (error) {
@@ -580,6 +592,10 @@ async function listSupportCommentsHandler(req, res) {
           object_type: 1,
         },
         order: [["date_created", "desc"]],
+        include: {
+          model: db.Profiles,
+          as: 'user',
+        },
       });
       return res.status(200).json({ comment });
     }
@@ -602,6 +618,10 @@ async function listSupportCommentsHandler(req, res) {
       order: [["date_created", "desc"]],
       limit: limit,
       offset: offset,
+      include: {
+        model: db.Profiles,
+        as: 'user',
+      },
     });
     return res.status(200).json({
       current_page: page,

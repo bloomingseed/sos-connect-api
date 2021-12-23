@@ -16,7 +16,12 @@ async function getComment(id_comment, res) {
   if (isNaN(parseInt(id_comment))) {
     return res.status(400).json({ error: `id_comment must be an integer`});
   }
-  let comment = await db.Comments.findByPk(id_comment);
+  let comment = await db.Comments.findByPk(id_comment, {
+    include: {
+      model: db.Profiles,
+      as: 'user',
+    }
+  });
   if (comment == null) {
     return res
       .status(400)

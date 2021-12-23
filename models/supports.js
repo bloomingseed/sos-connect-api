@@ -40,6 +40,10 @@ const createModel = (sequelize, DataTypes) => {
       foreignKey: "id_request",
       as: "request",
     });
+    Supports.belongsTo(models.Profiles, {
+      foreignKey: "username",
+      as: "user",
+    });
     Supports.hasMany(models.Comments, {
       foreignKey: "id_support",
       scope: {
