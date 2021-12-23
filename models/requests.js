@@ -37,6 +37,7 @@ const createModel = (sequelize, DataTypes) => {
   );
   Requests.associate = function (models) {
     Requests.belongsTo(models.Groups, { foreignKey: "id_group", as: "group" });
+    Requests.belongsTo(models.Profiles, { foreignKey: "username", as: "user" });
     Requests.hasMany(models.Supports, {
       foreignKey: "id_request",
       as: "supports",

@@ -700,18 +700,49 @@ async function getListProfileRequestsHandler(req, res) {
           is_deleted: false,
         },
         order: [["date_created", "desc"]],
+        include: [
+          {
+          model: db.Images,
+          as: "images",
+          attributes: ["url"],
+          },
+          {
+            model: db.Profiles,
+            as: 'user',
+          },
+        ],
       });
       return res.status(200).json(requests);
     }
-    total_requests = await db.Requests.count();
+    total_requests = await db.Requests.count({
+      where: {
+        username: username,
+        is_deleted: false,
+      },
+    });
     const { limit, offset, totalPages } = await pagination(
       total_requests,
       page,
       res
     );
     let requests = await db.Requests.findAll({
+      where: {
+        username: username,
+        is_deleted: false,
+      },
       limit: limit,
       offset: offset,
+      include: [
+        {
+        model: db.Images,
+        as: "images",
+        attributes: ["url"],
+        },
+        {
+          model: db.Profiles,
+          as: 'user',
+        },
+      ],
     });
     return res.status(200).json({
       current_page: page,
