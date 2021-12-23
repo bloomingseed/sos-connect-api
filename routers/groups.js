@@ -1034,8 +1034,20 @@ async function getListGroupRequestHandler(req, res) {
             model: db.Profiles,
             as: 'user',
           },
+          {
+            model: db.Reactions,
+            as: 'reactions',
+          },
+          {
+            model: db.Comments,
+            as: 'comments',
+          },
         ],
       });
+      for ( var i = 0; i < requests.length; i++) {
+        requests[i].dataValues.reactions = requests[i].dataValues.reactions.length;
+        requests[i].dataValues.comments = requests[i].dataValues.comments.length;
+      }
       return res.status(200).json(requests);
     }
     total_requests = await db.Requests.count({
@@ -1067,10 +1079,22 @@ async function getListGroupRequestHandler(req, res) {
           model: db.Profiles,
           as: 'user',
         },
+        {
+          model: db.Reactions,
+          as: 'reactions',
+        },
+        {
+          model: db.Comments,
+          as: 'comments',
+        },
       ],
       limit: limit,
       offset: offset,
     });
+    for ( var i = 0; i < requests.length; i++) {
+      requests[i].dataValues.reactions = requests[i].dataValues.reactions.length;
+      requests[i].dataValues.comments = requests[i].dataValues.comments.length;
+    }
     return res.status(200).json({
       current_page: page,
       total_pages: totalPages,
