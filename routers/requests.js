@@ -231,8 +231,20 @@ async function listRequestSupportsHandler(req, res) {
             model: db.Profiles,
             as: 'user',
           },
+          {
+            model: db.Reactions,
+            as: 'reactions',
+          },
+          {
+            model: db.Comments,
+            as: 'comments',
+          },
         ],
       });
+      for ( var i = 0; i < supports.length; i++) {
+        supports[i].dataValues.reactions = supports[i].dataValues.reactions.length;
+        supports[i].dataValues.comments = supports[i].dataValues.comments.length;
+      }
       return res.status(200).json(supports);
     }
     total_supports = await db.Supports.count({
@@ -264,10 +276,22 @@ async function listRequestSupportsHandler(req, res) {
           model: db.Profiles,
           as: 'user',
         },
+        {
+          model: db.Reactions,
+          as: 'reactions',
+        },
+        {
+          model: db.Comments,
+          as: 'comments',
+        },
       ],
       limit: limit,
       offset: offset,
     });
+    for ( var i = 0; i < supports.length; i++) {
+      supports[i].dataValues.reactions = supports[i].dataValues.reactions.length;
+      supports[i].dataValues.comments = supports[i].dataValues.comments.length;
+    }
     return res.status(200).json({
       current_page: page,
       total_pages: totalPages,
