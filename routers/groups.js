@@ -1042,11 +1042,16 @@ async function getListGroupRequestHandler(req, res) {
             model: db.Comments,
             as: 'comments',
           },
+          {
+            model: db.Supports,
+            as: 'supports',
+          }
         ],
       });
       for ( var i = 0; i < requests.length; i++) {
         requests[i].dataValues.reactions = requests[i].dataValues.reactions.length;
         requests[i].dataValues.comments = requests[i].dataValues.comments.length;
+        requests[i].dataValues.supports = requests[i].dataValues.supports.length;
       }
       return res.status(200).json(requests);
     }
@@ -1087,6 +1092,10 @@ async function getListGroupRequestHandler(req, res) {
           model: db.Comments,
           as: 'comments',
         },
+        {
+          model: db.Supports,
+          as: 'supports',
+        },
       ],
       limit: limit,
       offset: offset,
@@ -1094,6 +1103,7 @@ async function getListGroupRequestHandler(req, res) {
     for ( var i = 0; i < requests.length; i++) {
       requests[i].dataValues.reactions = requests[i].dataValues.reactions.length;
       requests[i].dataValues.comments = requests[i].dataValues.comments.length;
+      requests[i].dataValues.supports = requests[i].dataValues.supports.length;
     }
     return res.status(200).json({
       current_page: page,
