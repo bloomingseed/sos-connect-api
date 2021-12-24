@@ -25,10 +25,20 @@ async function getRequest(id_request, res) {
     return res.status(400).json({ error: `id_request must be an integer` });
   }
   let request = await db.Requests.findByPk(id_request, {
-    include: {
-      model: db.Profiles,
-      as: 'user',
-    },
+    include: [
+      {
+        model: db.Profiles,
+        as: 'user',
+      },
+      {
+        model: db.Comments,
+        as: 'comments',
+      },
+      {
+        model: db.Supports,
+        as: 'supports',
+      },
+    ],
   });
   if (request == null) {
     return res
@@ -1146,6 +1156,49 @@ async function createCommentHandler(req, res) {
   }
 }
 
+async function getListRequestHome(req, res){
+  try {
+    let requests = await db.Requests.findAll({
+      order: [["date_created", "desc"]],
+      include: [
+        {
+        model: db.Images,
+        as: "images",
+        attributes: ["url"],
+        },
+        {
+          model: db.Profiles,
+          as: 'user',
+        },
+        {
+          model: db.Reactions,
+          as: 'reactions',
+        },
+        {
+          model: db.Comments,
+          as: 'comments',
+        },
+        {
+          model: db.Supports,
+          as: 'supports',
+        },
+      ],
+      limit: 8,
+    });
+    for ( var i = 0; i < requests.length; i++) {
+      requests[i].dataValues.reactions = requests[i].dataValues.reactions.length;
+      requests[i].dataValues.comments = requests[i].dataValues.comments.length;
+      requests[i].dataValues.supports = requests[i].dataValues.supports.length;
+    }
+    return res.status(200).json(requests);
+  } catch (error) {
+    return res.status(500).json({ error: error });
+  }
+}
+
+requestsRouter
+  .route("")
+  .get(getListRequestHome);
 requestsRouter
   .route("/:id_request")
   .get(getRequestHandler)
